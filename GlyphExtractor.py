@@ -6,28 +6,6 @@ import cv2
 import numpy as np
 from matplotlib.pyplot import imshow
 
-def filterInnerContours( conts ):
-    outerOne = conts[ 0 ]
-    for i in conts:
-        if( i[2] > outerOne[2] ):
-            outerOne = i
-
-    #  print( 'Bigger box', outerOne )
-    x1 = outerOne[0]
-    y1 = outerOne[1]
-    x2 = x1 + outerOne[2]
-    y2 = y1 + outerOne[3]
-
-    children = conts.copy();
-    children.remove( outerOne )
-
-    out = [ outerOne ];
-    for child in children:
-        (x,y,w,h) = child
-        if( ( x < x1 ) or (x+w) > x2  or y < y1  or ( y+h ) > y2 ):
-            out.append( child )
-    return out
-
 
 def detectContoursFromImg( rgb,
             eclipse=(2,2),
@@ -68,7 +46,6 @@ class GlyphExtractor(object):
         rgb = cv2.cvtColor( self.rgb, cv2.COLOR_BGR2GRAY)
         ( grad, bw, connected, contours ) = detectContoursFromImg( rgb, **kwargs )
         contours = [ cv2.boundingRect( contour ) for contour in contours ];
-        contours = filterInnerContours( contours )
         return ( grad, bw, connected, contours )
     def detectContours( self, **kwargs ):
         ( grad, bw, connected, contours ) = self._detectContours( kwargs )

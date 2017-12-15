@@ -4,7 +4,7 @@
 from os import makedirs
 from utils import readJson, fixedWidthImg
 from unicode_text_to_image_array.scribe import scribe_wrapper
-from GlyphExtractor import detectContoursFromImg, markContoursImg, filterInnerContours
+from GlyphExtractor import detectContoursFromImg, markContoursImg
 import cv2
 import numpy as np
 from matplotlib.pyplot import imshow
@@ -40,18 +40,15 @@ def renderGlyph( txt, lable, font='AnjaliOldLipi', style='regular' ):
     img1 = cv2.cvtColor( img, cv2.COLOR_GRAY2BGR  )
     contours = detectContoursFromImg( img )[3]
     contours = [ cv2.boundingRect( contour ) for contour in contours ];
-    contours = filterInnerContours( contours )
     if( lable[0] == '@' ):
         if( lable == '@e' or lable == '@E' ):
             contours = contours[:-1]
         else:
             contours = contours[1:]
-        contours = filterInnerContours( contours )
 
     if( len( contours ) > 1 ):
         #  markContoursImg( img1, contours )
         #  show( img1 )
-        #  filterInnerContours( contours )
         #  import ipdb;ipdb.set_trace()
         raise ValueError( "Found multiple glyphs for %s -> %s . Ignoring" % ( txt, lable ) )
     #  print( "Processing %s -> %s ." % ( txt, lable ) )
