@@ -54,4 +54,6 @@ List of available commands:
 
     extractGlyphsFromDatafiles    - Extract Glyphs from each image files stored in 'data' directory
 EOF
+else
+  $1
 fi
