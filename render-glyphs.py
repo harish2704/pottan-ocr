@@ -2,7 +2,7 @@
 
 
 from os import makedirs
-from utils import readJson
+from utils import readJson, fixedWidthImg
 from unicode_text_to_image_array.scribe import scribe_wrapper
 from GlyphExtractor import detectContoursFromImg, markContoursImg, filterInnerContours
 import cv2
@@ -31,9 +31,6 @@ styles = [
         'italic',
         'bold italic'
         ]
-FINAL_W=96
-FINAL_H=96
-frameImg = np.zeros( ( FINAL_H, FINAL_W ), dtype=np.uint8)
 
 
 
@@ -60,21 +57,7 @@ def renderGlyph( txt, lable, font='AnjaliOldLipi', style='regular' ):
     #  print( "Processing %s -> %s ." % ( txt, lable ) )
     ( x, y, w, h ) = contours[0]
     croppedImg = img[y:y+h, x:x+w ]
-    ( currentH, currentW) = croppedImg.shape
-    if( currentH > currentW ):
-        newWidth = int( currentW * ( FINAL_H/currentH ) )
-        newHeigh = FINAL_H
-        offsetY=0
-        offsetX = int( ( FINAL_W - newWidth )/2 )
-    else:
-        newHeigh = int( currentH * ( FINAL_W/currentW ) )
-        newWidth = FINAL_W
-        offsetX=0
-        offsetY = int( ( FINAL_H - newHeigh )/2 )
-    resizedImg = cv2.resize( croppedImg, ( newWidth, newHeigh ), interpolation=cv2.INTER_CUBIC )
-    frameImg = np.ones( ( FINAL_H, FINAL_W ), dtype=np.uint8)*255
-    frameImg[offsetY:offsetY+newHeigh, offsetX:offsetX+newWidth] = resizedImg
-    return frameImg
+    return fixedWidthImg( croppedImg )
 
 def main():
     for ( glyph, lable ) in glyphs:
