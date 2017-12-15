@@ -14,16 +14,16 @@ def show( im ):
 glyphs = readJson('./cache/glyph_labels.json')
 fonts=[
         'AnjaliOldLipi',
-        #  'Rachana'
-        #  'Noto Serif Malayalam',
-        #  'Meera',
-        #  'Kalyani',
-        #  'Noto Sans Malayalam UI',
-        #  'RaghuMalayalam',
-        #  'Lohit Malayalam',
-        #  'Suruma',
-        #  'Dyuthi',
-        #  'Samyak'
+        'Rachana'
+        'Noto Serif Malayalam',
+        'Meera',
+        'Kalyani',
+        'Noto Sans Malayalam UI',
+        'RaghuMalayalam',
+        'Lohit Malayalam',
+        'Suruma',
+        'Dyuthi',
+        'Samyak'
         ]
 styles = [
         'regular',
@@ -89,7 +89,8 @@ def main():
                 except Exception as e:
                     print( e )
 
-main()
+if( __name__ == '__main__' ):
+    main()
 
 #  ( txt, lable ) = glyphs[ 96 ]
 #  renderGlyph( txt, lable )
