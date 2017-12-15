@@ -5,14 +5,13 @@ from os import path
 import cv2
 import numpy as np
 from matplotlib.pyplot import imshow
+from utils import fixedWidthImg
 
 
 def detectContoursFromImg( rgb,
             eclipse=(2,2),
             rect=(1,1),
-            threshold=150,
-            chain=cv2.CHAIN_APPROX_NONE,
-            retr=cv2.RETR_EXTERNAL ):
+            threshold=150 ):
     #  _, small = cv2.threshold( small, threshold, 255.0, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, eclipse )
     grad = cv2.morphologyEx( rgb, cv2.MORPH_GRADIENT, kernel)
@@ -20,9 +19,14 @@ def detectContoursFromImg( rgb,
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, rect )
     connected = cv2.morphologyEx(bw, cv2.MORPH_CLOSE, kernel)
     #  imshow( connected )
-    # using RETR_EXTERNAL instead of RETR_CCOMP
-    _,contours, hierarchy = cv2.findContours(connected.copy(), retr, chain )
-    return ( grad, bw, connected, contours )
+    _,contours, hierarchy = cv2.findContours(connected.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE )
+
+    #  Filter top level contours only
+    topC = []
+    for idx, h in enumerate(hierarchy[0]):
+        if( h[3] == -1 ):
+            topC.append( contours[idx] )
+    return ( grad, bw, connected, topC )
 
 def markContoursImg( rgb, contours, minWidth=11 ):
     #  mask = np.zeros( rgb.shape, dtype=np.uint8)
@@ -30,7 +34,6 @@ def markContoursImg( rgb, contours, minWidth=11 ):
         #  mask[y:y+h, x:x+w] = 0
         #  cv2.drawContours(mask, contours, idx, (255, 255, 255), -1)
         #  r = float(cv2.countNonZero(mask[y:y+h, x:x+w])) / (w * h)
-        print ( x,y, w, h, 'Contour ')
         if w>minWidth:
             cv2.rectangle(rgb, (x, y), (x+w, y+h), (255, 0, 0), 1)
 
@@ -47,17 +50,18 @@ class GlyphExtractor(object):
         ( grad, bw, connected, contours ) = detectContoursFromImg( rgb, **kwargs )
         contours = [ cv2.boundingRect( contour ) for contour in contours ];
         return ( grad, bw, connected, contours )
+
     def detectContours( self, **kwargs ):
-        ( grad, bw, connected, contours ) = self._detectContours( kwargs )
+        ( grad, bw, connected, contours ) = self._detectContours( **kwargs )
         return contours
 
-    def extractContours( self, contours, outdir='./glyp-extracted', minWidth=11 ):
+    def extractContours( self, contours, outdir='./cache/extracted', minWidth=11 ):
         os.makedirs( outdir, exist_ok=True )
-        rgb = self.rgb
+        rgb = cv2.cvtColor( self.rgb, cv2.COLOR_BGR2GRAY)
         for idx, ( x, y, w, h ) in enumerate(contours):
             if( w > minWidth ):
                 croppedImg = rgb[y:y+h, x:x+w ]
-                cv2.imwrite( '%s/%s_%04d.png'%( outdir, self.imageFileBaseName, idx ), croppedImg )
+                cv2.imwrite( '%s/%s_%04d.png'%( outdir, self.imageFileBaseName, idx ), fixedWidthImg( croppedImg ) )
 
     def markContours( self, contours, **kwargs ):
         return markContoursImg( self.rgb, contours, **kwargs )
