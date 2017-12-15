@@ -3,6 +3,8 @@ cache/extracted
 
 .ipynb_checkpoints
 cache/generated
+
+data
 __pycache__
 .vscode
 *.pyc
