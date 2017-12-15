@@ -10,7 +10,7 @@ import sys
 
 def main( fname, ourDir ):
     gd = GlyphExtractor( fname )
-    contours = gd.detectContours( rect=(2,2) )
+    contours = gd.detectContours()
     gd.extractContours( contours, ourDir )
 
 if __name__ == "__main__":
