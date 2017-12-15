@@ -29,12 +29,12 @@ cat $glypListFile | $varamozhiConverter > $glypLabelListFile
   # done
 # done
 
-for font in Kalyani; do
-  convert -font $font -colorspace gray -pointsize 48  pango:"<b>$(cat $glypListFile)</b>" $cache/$font-bold.png
-  for kind in bold; do
-    ./extract-glyphs.py cache/$font-$kind.png cache/generated/
-  done
-done
+# for font in Kalyani; do
+  # convert -font $font -colorspace gray -pointsize 48  pango:"<b>$(cat $glypListFile)</b>" $cache/$font-bold.png
+  # for kind in bold; do
+    # ./extract-glyphs.py cache/$font-$kind.png cache/generated/
+  # done
+# done
 
 
 # exit

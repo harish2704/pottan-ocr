@@ -1,8 +1,8 @@
-./cache/ml-glyphs/sorted/**/*.png
-cache/ml-glyphs/sorted/**/*.png
-./cache/ml-glyphs/unsorted/*.png
-cache/ml-glyphs/unsorted/*.png
-.ipynb_checkpoints/*
-./cache/generated/*
-cache/generated/*
+
+cache/extracted
+
+.ipynb_checkpoints
+cache/generated
 __pycache__
+.vscode
+*.pyc

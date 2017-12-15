@@ -31,8 +31,9 @@ var labelOverride = {
 out = [];
 
 glyphList.forEach(function( glyph, i ){
-  out.push( [ glyph, labelOverride[glyph] || gyphLabelList[i] ] );
-  // fs.writeFileSync( `./ml-glyphs/text/${ labelOverride[glyph] || gyphLabelList[i]}.txt`, glyph );
+  label = labelOverride[glyph] || gyphLabelList[i];
+  out.push( [ glyph, label ] );
+  // fs.writeFileSync( `./ml-glyphs/text/${ label }.txt`, glyph );
 });
 
 fs.writeFileSync( process.argv[4], JSON.stringify(out, null, 1) );

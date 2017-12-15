@@ -10,7 +10,7 @@ function crossProd( a, b ){
 }
 
 var vyanjanasHasDouble = _l('ക-ഗ-ങ-ച-ജ-ഞ-ട-ഡ-ണ-ത-ദ-ന-പ-ബ-മ' + '-യ-ല-വ-ശ-സ-ള-റ' );
-var misc = _l( 'ങ്ക-ണ്ട-ക്ഷ-ന്ധ-ഞ്ച-ജ്ഞ-ശ്ച-ന്ത-ണ്ഡ-സ്ഥ-ബ്ദ-മ്പ-ന്റ').concat(
+var misc = _l( 'ങ്ക-ണ്ട-ക്ഷ-ഷ്ട-ത്മ-ന്ധ-ഞ്ച-ല്പ-ഹ്ന-ജ്ഞ-ശ്ച-ന്ത-ണ്ഡ-സ്ഥ-ബ്ദ-മ്പ-ന്റ').concat(
   crossProd( _l('ക-ഗ-ങ-ച-ജ-ഞ-ട-ഡ-ണ-ത-ദ-ധ-ന-പ-ബ-ഭ-മ' + '-യ-ല-വ-ശ-സ-ള-റ' ), ["്ല"] ),
   crossProd( _l('ക-ന-പ-ബ-മ' + '-സ' + '-ണ്ട-ന്ധ-ന്ത-ണ്ഡ-മ്പ' ), ["്ര"] ),
   crossProd( _l('ക-പ' + '-യ-ല-സ' ), ["്ത"] ),
@@ -48,9 +48,7 @@ allItems = [].concat(
   allGlyphs.swaras,
   allGlyphs.vyanjanas,
   allGlyphs.chillu,
-  ["-്", "-ാ", "-ി", "-ീ", "-ു", "-ൂ", "-ൃ",
-    // "ൢ", "ൣ",
-    "-ൄ", "-െ", "-േ", "-ൗ", "-ം", "-ഃ"],
+  allGlyphs.chihnnas,
   allGlyphs.hardVyanjanas,
   misc,
   allGlyphs.withChinnas,
