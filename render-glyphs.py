@@ -40,29 +40,46 @@ def show( im ):
 
 glyphs = readJson('./cache/glyph_labels.json')
 fonts=[
-        'AnjaliOldLipi',
-        'Rachana'
-        'Noto Serif Malayalam',
-        'Meera',
-        'Kalyani',
-        'Noto Sans Malayalam UI',
-        'RaghuMalayalam',
-        'Lohit Malayalam',
-        'Suruma',
-        'Dyuthi',
-        'Samyak'
-        ]
-styles = [
-        'regular',
-        'bold',
-        'italic',
-        'bold italic'
+        ('AnjaliOldLipi', ['regular', 'bold' ]),
+        ('Chilanka', ['regular', 'bold', 'italic' ]),
+        ('Dyuthi', ['regular', 'bold', 'italic', 'bold italic']),
+        ('Kalyani', ['regular', 'bold', 'italic', 'bold italic']),
+        ('Karumbi', ['regular', 'bold', 'italic', 'bold italic']),
+        #  It is already too tick. Rm bold
+        ('Keraleeyam', ['regular', 'italic' ]),
+        ('Lohit Malayalam', ['regular', 'bold', 'italic', 'bold italic']),
+        ('Manjari', ['regular', 'bold', 'italic', 'bold italic']),
+        ('Manjari,Manjari Thin', ['regular', 'italic']),
+        ('Meera', ['regular', 'bold', 'italic', 'bold italic']),
+        ('ML-NILA01', ['regular', 'bold', 'italic', 'bold italic']),
+        #  ('ML-NILA01_NewLipi', ['regular', 'bold', 'italic', 'bold italic']),
+        ('ML-NILA02', ['regular', 'bold', 'italic', 'bold italic']),
+        #  ('ML-NILA02_NewLipi', ['regular', 'bold', 'italic', 'bold italic']),
+        ('ML-NILA03', ['regular', 'bold', 'italic', 'bold italic']),
+        #  ('ML-NILA03_NewLipi', ['regular', 'bold', 'italic', 'bold italic']),
+        ('ML-NILA04', ['regular', 'bold', 'italic', 'bold italic']),
+        #  ('ML-NILA04_NewLipi', ['regular', 'bold', 'italic', 'bold italic']),
+        ('ML-NILA05', ['regular', 'bold', 'italic', 'bold italic']),
+        #  ('ML-NILA05_NewLipi', ['regular', 'bold', 'italic', 'bold italic']),
+        ('ML-NILA06', ['regular', 'bold', 'italic', 'bold italic']),
+        #  ('ML-NILA06_NewLipi', ['regular', 'bold', 'italic', 'bold italic']),
+        ('ML-NILA07', ['regular', 'bold', 'italic', 'bold italic']),
+        #  ('ML-NILA07_NewLipi', ['regular', 'bold', 'italic', 'bold italic']),
+        ('Noto Sans Malayalam', ['regular', 'bold', 'italic', 'bold italic']),
+        ('Noto Sans Malayalam UI', ['regular', 'bold', 'italic', 'bold italic']),
+        ('Noto Serif Malayalam', ['regular', 'bold', 'italic', 'bold italic']),
+        ('Rachana', ['regular', 'bold', 'italic', 'bold italic']),
+        ('RaghuMalayalam', ['regular', 'bold', 'italic', 'bold italic']),
+        ('Samyak Malayalam', ['regular', 'bold', 'italic', 'bold italic']),
+        ('Suruma', ['regular', 'bold', 'italic', 'bold italic']),
+        #  It is already too tick. Rm bold
+        ('Uroob', ['regular', 'italic' ])
         ]
 
 
 
 def renderGlyph( txt, lable, font='AnjaliOldLipi', style='regular' ):
-    fontStyle = "%s %s 38"%( font, style )
+    fontStyle = "%s %s 48"%( font, style )
     img = ( 255 - scribe_wrapper( txt, fontStyle, 120, 0, 0, 0 ) )
     img1 = cv2.cvtColor( img, cv2.COLOR_GRAY2BGR  )
     contours = detectContoursFromImg( img, eclipse=(2,2), rect=(1,1) )[3]
@@ -90,7 +107,7 @@ def main():
     for ( glyph, lable ) in glyphs:
         dirname = "./cache/generated/%s"% lable
         makedirs( dirname, exist_ok=True )
-        for font in fonts:
+        for ( font, styles ) in fonts:
             for style in styles:
                 try:
                     img = renderGlyph( glyph, lable, font, style )
