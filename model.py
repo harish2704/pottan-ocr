@@ -14,6 +14,7 @@ import cv2
 import numpy as np
 import torch
 cachedData = './cache/trainData.npy'
+savedModel = './cache/model-state'
 
 def getTrainData( fname ):
     img = cv2.imread( fname, cv2.IMREAD_GRAYSCALE )
@@ -49,9 +50,9 @@ parser.add_argument('--test-batch-size', type=int, default=1000, metavar='N',
                     help='input batch size for testing (default: 1000)')
 parser.add_argument('--epochs', type=int, default=10, metavar='N',
                     help='number of epochs to train (default: 10)')
-parser.add_argument('--lr', type=float, default=0.01, metavar='LR',
+parser.add_argument('--lr', type=float, default=0.005, metavar='LR',
                     help='learning rate (default: 0.01)')
-parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
+parser.add_argument('--momentum', type=float, default=0.3, metavar='M',
                     help='SGD momentum (default: 0.5)')
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='disables CUDA training')
@@ -73,26 +74,31 @@ train_loader = torch.utils.data.DataLoader(
     batch_size=args.batch_size, shuffle=True, **kwargs)
 test_loader = train_loader
 
+xx = 3000
+
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        self.conv1 = nn.Conv2d(1, 400, kernel_size=5)
-        self.conv2 = nn.Conv2d(400, 800, kernel_size=5)
+        self.conv1 = nn.Conv2d(1, 60, kernel_size=5 )
+        self.conv2 = nn.Conv2d( 60, 120, kernel_size=5 )
         self.conv2_drop = nn.Dropout2d()
-        self.fc1 = nn.Linear( 20000, 800)
-        self.fc2 = nn.Linear(800, 400)
+        self.fc1 = nn.Linear( xx, 800 )
+        self.fc2 = nn.Linear( 800, 395)
 
     def forward(self, x):
         x = F.relu(F.max_pool2d(self.conv1(x), 2))
         x = F.relu(F.max_pool2d(self.conv2_drop(self.conv2(x)), 2))
         #  import ipdb; ipdb.set_trace()
-        x = x.view(-1, 20000 )
+        x = x.view(-1, xx )
         x = F.relu(self.fc1(x))
         x = F.dropout(x, training=self.training)
         x = self.fc2(x)
         return F.log_softmax(x)
 
 model = Net()
+if( path.exists( savedModel ) ):
+    model.load_state_dict( torch.load( savedModel ) )
+
 if args.cuda:
     model.cuda()
 
@@ -135,5 +141,16 @@ def test():
 
 
 for epoch in range(1, args.epochs + 1):
-    train(epoch)
-    test()
+    try:
+        train(epoch)
+        test()
+    except KeyboardInterrupt:
+        torch.save( model.state_dict(), savedModel )
+        print('Saved model')
+        break
+
+
+
+
+
+#  import ipdb; ipdb.set_trace()
