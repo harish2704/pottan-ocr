@@ -31,9 +31,11 @@ def filterInnerContours( conts ):
     out = [ outerOne ];
     for child in children:
         (x,y,w,h) = child
-        if( ( x < x1 ) or (x+w) > x2  or y < y1  or ( y+h ) > y2 ):
-            out.append( child )
+        if( w> 5 and h > 5 ):
+            if( ( x < x1 ) or (x+w) > x2  or y < y1  or ( y+h ) > y2 ):
+                out.append( child )
     return out
+
 
 def show( im ):
     imshow( im, cmap='gray')
@@ -52,19 +54,12 @@ fonts=[
         ('Manjari,Manjari Thin', ['regular', 'italic']),
         ('Meera', ['regular', 'bold', 'italic', 'bold italic']),
         ('ML-NILA01', ['regular', 'bold', 'italic', 'bold italic']),
-        #  ('ML-NILA01_NewLipi', ['regular', 'bold', 'italic', 'bold italic']),
         ('ML-NILA02', ['regular', 'bold', 'italic', 'bold italic']),
-        #  ('ML-NILA02_NewLipi', ['regular', 'bold', 'italic', 'bold italic']),
         ('ML-NILA03', ['regular', 'bold', 'italic', 'bold italic']),
-        #  ('ML-NILA03_NewLipi', ['regular', 'bold', 'italic', 'bold italic']),
         ('ML-NILA04', ['regular', 'bold', 'italic', 'bold italic']),
-        #  ('ML-NILA04_NewLipi', ['regular', 'bold', 'italic', 'bold italic']),
         ('ML-NILA05', ['regular', 'bold', 'italic', 'bold italic']),
-        #  ('ML-NILA05_NewLipi', ['regular', 'bold', 'italic', 'bold italic']),
         ('ML-NILA06', ['regular', 'bold', 'italic', 'bold italic']),
-        #  ('ML-NILA06_NewLipi', ['regular', 'bold', 'italic', 'bold italic']),
         ('ML-NILA07', ['regular', 'bold', 'italic', 'bold italic']),
-        #  ('ML-NILA07_NewLipi', ['regular', 'bold', 'italic', 'bold italic']),
         ('Noto Sans Malayalam', ['regular', 'bold', 'italic', 'bold italic']),
         ('Noto Sans Malayalam UI', ['regular', 'bold', 'italic', 'bold italic']),
         ('Noto Serif Malayalam', ['regular', 'bold', 'italic', 'bold italic']),
@@ -79,24 +74,27 @@ fonts=[
 
 
 def renderGlyph( txt, lable, font='AnjaliOldLipi', style='regular' ):
+    #  if( lable[0] == '@' ):
+        #  txt = 'ഉ' + txt
     fontStyle = "%s %s 48"%( font, style )
-    img = ( 255 - scribe_wrapper( txt, fontStyle, 120, 0, 0, 0 ) )
+    img = ( 255 - scribe_wrapper( txt, fontStyle, 120, 10, 10, 0 ) )
     img1 = cv2.cvtColor( img, cv2.COLOR_GRAY2BGR  )
-    contours = detectContoursFromImg( img, eclipse=(2,2), rect=(1,1) )[3]
+    detectOut = detectContoursFromImg( img, eclipse=(2,2), rect=(1,1) )
+    contours = detectOut[3]
     contours = [ cv2.boundingRect( contour ) for contour in contours ];
-    contours = filterInnerContours( contours )
-    if( lable[0:2] == '-@' and len( contours ) > 1 ):
-        if( lable == '-@e' or lable == '-@E' ):
-            contours = contours[1:]
+    if( lable[0] == '@' and len( contours ) > 1 ):
+        #  if( lable == '@i' ):
+            #  markContoursImg( img1, contours, minWidth=5 ); imshow( img1 ); import ipdb;ipdb.set_trace()
+        contours.sort(key=lambda x:x[0]+x[2] )
+        if( lable == '@e' or lable == '@E' ):
+            contours = contours[0:1]
         else:
-            contours = contours[:-1]
+            contours = contours[-1:]
+    else:
         contours = filterInnerContours( contours )
 
     if( len( contours ) > 1 ):
-        #  cv2.imwrite('./test.png', img1 )
-        #  markContoursImg( img1, contours, minWidth=5 )
-        #  imshow( img1 )
-        #  import ipdb;ipdb.set_trace()
+        #  markContoursImg( img1, contours, minWidth=5 ); imshow( img1 ); import ipdb;ipdb.set_trace()
         raise ValueError( "Found multiple glyphs for %s -> %s . Ignoring" % ( txt, lable ) )
     #  print( "Processing %s -> %s ." % ( txt, lable ) )
     ( x, y, w, h ) = contours[0]
