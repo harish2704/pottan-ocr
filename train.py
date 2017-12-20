@@ -1,48 +1,16 @@
-from __future__ import print_function
 import argparse
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
-from torchvision import datasets, transforms
 from torch.autograd import Variable
+from torch.utils.data import DataLoader
+from model import Net
+import torch.optim as optim
+import torch.nn.functional as F
 
-from utils import readJson
 from os import path
 import glob
-import cv2 
 import numpy as np
 import torch
-cachedData = './cache/trainData.npy'
-savedModel = './cache/model-state'
-
-def getTrainData( fname ):
-    img = cv2.imread( fname, cv2.IMREAD_GRAYSCALE )
-    img = resizedImg = cv2.resize( img, ( 32, 32 ), interpolation=cv2.INTER_CUBIC )
-    return np.expand_dims( img.astype( np.float32 ), axis=0 )
 
 
-if( path.exists( cachedData ) ):
-    print('Loading cached data')
-    trainData = np.load( cachedData )
-    print('Loaded')
-else:
-    print('Saving cached data')
-    glyphs = readJson('./cache/glyph_labels.json')
-    charMap = {}
-    for idx, ( glyph, lable ) in enumerate( glyphs ):
-        charMap[ lable ] = idx
-    trainFiles = glob.glob('./cache/generated/**/*.pgm')
-    traiImagenData = [ getTrainData( fname ) for fname in trainFiles ]
-    labels = [ charMap[ fname.split('/')[3] ] for fname in trainFiles ]
-    trainData = np.array( list( zip( traiImagenData, labels )))
-    print('Saved')
-    np.save( cachedData, trainData )
-
-
-#  import ipdb; ipdb.set_trace()
-
-# Training settings
 parser = argparse.ArgumentParser(description='PyTorch MNIST Example')
 parser.add_argument('--batch-size', type=int, default=64, metavar='N',
                     help='input batch size for training (default: 64)')
@@ -60,49 +28,82 @@ parser.add_argument('--seed', type=int, default=1, metavar='S',
                     help='random seed (default: 1)')
 parser.add_argument('--log-interval', type=int, default=10, metavar='N',
                     help='how many batches to wait before logging training status')
+parser.add_argument('--input-dir', type=str, default='./cache/', metavar='I',
+                    help='how many batches to wait before logging training status')
+parser.add_argument('--output-dir', type=str, default='./cache/', metavar='O',
+                    help='how many batches to wait before logging training status')
 args = parser.parse_args()
+
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 
-torch.manual_seed(args.seed)
-if args.cuda:
-    torch.cuda.manual_seed(args.seed)
+if( args.cuda ):
+    print( 'Cuda is available' )
 
+INPUT_DIR = args.input_dir
+OUTPUT_DIR = args.output_dir
+
+trainImageFiles = INPUT_DIR + 'generated/**/*.pgm'
+inputTrainData = INPUT_DIR + 'trainData.npz'
+outputTrainData = OUTPUT_DIR + 'trainData.npz'
+
+inputSavedModel = INPUT_DIR + 'model-state'
+outputSavedModel = INPUT_DIR + 'model-state'
+
+
+def getTensorFromImg( fname ):
+    import cv2 
+    img = cv2.imread( fname, cv2.IMREAD_GRAYSCALE )
+    img = resizedImg = cv2.resize( img, ( 32, 32 ), interpolation=cv2.INTER_CUBIC )
+    return np.expand_dims( img.astype( np.float32 ), axis=0 )
+
+
+
+
+if( path.exists( inputTrainData ) ):
+    print('Loading cached data')
+    trainData = np.load( inputTrainData )['arr_0']
+    print('Loaded')
+else:
+    print('Saving cached data')
+    from utils import readJson
+    glyphs = readJson( INPUT_DIR + 'glyph_labels.json')
+    charMap = {}
+    for idx, ( glyph, lable ) in enumerate( glyphs ):
+        charMap[ lable ] = idx
+    trainFiles = glob.glob( trainImageFiles )
+    traiImagenData = [ getTensorFromImg( fname ) for fname in trainFiles ]
+    labels = [ charMap[ fname.split('/')[3] ] for fname in trainFiles ]
+    trainData = np.array( list( zip( traiImagenData, labels )))
+    print('Saved')
+    np.savez_compressed( outputTrainData, trainData )
+
+
+# Training settings
 
 kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
-train_loader = torch.utils.data.DataLoader(
+
+train_loader = DataLoader(
     [ i.tolist() for i in trainData ],
     batch_size=args.batch_size, shuffle=True, **kwargs)
 test_loader = train_loader
 
-fc1Width = 120*25
-
-class Net(nn.Module):
-    def __init__(self):
-        super(Net, self).__init__()
-        self.conv1 = nn.Conv2d(1, 60, kernel_size=5 )
-        self.conv2 = nn.Conv2d( 60, 120, kernel_size=5 )
-        self.conv2_drop = nn.Dropout2d()
-        self.fc1 = nn.Linear( fc1Width, 800 )
-        self.fc2 = nn.Linear( 800, 395)
-
-    def forward(self, x):
-        x = F.relu(F.max_pool2d(self.conv1(x), 2))
-        x = F.relu(F.max_pool2d(self.conv2_drop(self.conv2(x)), 2))
-        #  import ipdb; ipdb.set_trace()
-        x = x.view(-1, fc1Width )
-        x = F.relu(self.fc1(x))
-        x = F.dropout(x, training=self.training)
-        x = self.fc2(x)
-        return F.log_softmax(x)
+torch.manual_seed(args.seed)
 
 model = Net()
-if( path.exists( savedModel ) ):
-    model.load_state_dict( torch.load( savedModel ) )
+if( path.exists( inputSavedModel ) ):
+    model.load_state_dict( torch.load( inputSavedModel ) )
 
 if args.cuda:
     model.cuda()
 
+
+
+
 optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
+
+if args.cuda:
+    torch.cuda.manual_seed(args.seed)
+
 
 def train(epoch):
     model.train()
@@ -139,7 +140,6 @@ def test():
         test_loss, correct, len(test_loader.dataset),
         100. * correct / len(test_loader.dataset)))
 
-
 for epoch in range(1, args.epochs + 1):
     try:
         train(epoch)
@@ -148,9 +148,7 @@ for epoch in range(1, args.epochs + 1):
         break
 
 
-torch.save( model.state_dict(), savedModel )
+torch.save( model.state_dict(), outputSavedModel )
 print('Saved model')
-
-
 
 #  import ipdb; ipdb.set_trace()
