@@ -74,7 +74,7 @@ train_loader = torch.utils.data.DataLoader(
     batch_size=args.batch_size, shuffle=True, **kwargs)
 test_loader = train_loader
 
-xx = 3000
+fc1Width = 120*25
 
 class Net(nn.Module):
     def __init__(self):
@@ -82,14 +82,14 @@ class Net(nn.Module):
         self.conv1 = nn.Conv2d(1, 60, kernel_size=5 )
         self.conv2 = nn.Conv2d( 60, 120, kernel_size=5 )
         self.conv2_drop = nn.Dropout2d()
-        self.fc1 = nn.Linear( xx, 800 )
+        self.fc1 = nn.Linear( fc1Width, 800 )
         self.fc2 = nn.Linear( 800, 395)
 
     def forward(self, x):
         x = F.relu(F.max_pool2d(self.conv1(x), 2))
         x = F.relu(F.max_pool2d(self.conv2_drop(self.conv2(x)), 2))
         #  import ipdb; ipdb.set_trace()
-        x = x.view(-1, xx )
+        x = x.view(-1, fc1Width )
         x = F.relu(self.fc1(x))
         x = F.dropout(x, training=self.training)
         x = self.fc2(x)
@@ -145,11 +145,11 @@ for epoch in range(1, args.epochs + 1):
         train(epoch)
         test()
     except KeyboardInterrupt:
-        torch.save( model.state_dict(), savedModel )
-        print('Saved model')
         break
 
 
+torch.save( model.state_dict(), savedModel )
+print('Saved model')
 
 
 
