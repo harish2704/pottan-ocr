@@ -2,8 +2,8 @@ import json
 import cv2
 import numpy as np
 
-FINAL_W=96
-FINAL_H=96
+FINAL_W=32
+FINAL_H=32
 
 def readFile( fname ):
     with open( fname, 'r') as f:

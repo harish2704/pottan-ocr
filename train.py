@@ -47,7 +47,7 @@ inputTrainData = INPUT_DIR + 'trainData.npz'
 outputTrainData = OUTPUT_DIR + 'trainData.npz'
 
 inputSavedModel = INPUT_DIR + 'model-state'
-outputSavedModel = INPUT_DIR + 'model-state'
+outputSavedModel = OUTPUT_DIR + 'model-state'
 
 
 def getTensorFromImg( fname ):
@@ -91,7 +91,7 @@ torch.manual_seed(args.seed)
 
 model = Net()
 if( path.exists( inputSavedModel ) ):
-    model.load_state_dict( torch.load( inputSavedModel ) )
+    model.load_state_dict( torch.load( inputSavedModel, map_location={'cuda:0': 'cpu'} ) )
 
 if args.cuda:
     model.cuda()
@@ -131,6 +131,7 @@ def test():
             data, target = data.cuda(), target.cuda()
         data, target = Variable(data, volatile=True), Variable(target)
         output = model(data)
+        #  import ipdb; ipdb.set_trace()
         test_loss += F.nll_loss(output, target, size_average=False).data[0] # sum up batch loss
         pred = output.data.max(1, keepdim=True)[1] # get the index of the max log-probability
         correct += pred.eq(target.data.view_as(pred)).cpu().sum()
