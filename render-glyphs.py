@@ -79,10 +79,11 @@ def renderGlyph( txt, lable, font='AnjaliOldLipi', style='regular' ):
     fontStyle = "%s %s 48"%( font, style )
     img = ( 255 - scribe_wrapper( txt, fontStyle, 120, 10, 10, 0 ) )
     img1 = cv2.cvtColor( img, cv2.COLOR_GRAY2BGR  )
-    detectOut = detectContoursFromImg( img, eclipse=(2,2), rect=(1,1) )
-    contours = detectOut[3]
+    contours = detectContoursFromImg( img, eclipse=(2,2), rect=(1,1) )[0]
     contours = [ cv2.boundingRect( contour ) for contour in contours ];
     if( lable[0] == '@' and len( contours ) > 1 ):
+        if( lable == '@va' and ( font in [ 'ML-NILA04','ML-NILA05','ML-NILA06','ML-NILA07',  ]) ):
+            raise ValueError('Skipping @va rendering for NILA fonts')
         #  if( lable == '@i' ):
             #  markContoursImg( img1, contours, minWidth=5 ); imshow( img1 ); import ipdb;ipdb.set_trace()
         contours.sort(key=lambda x:x[0]+x[2] )

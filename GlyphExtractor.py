@@ -10,15 +10,15 @@ from utils import fixedWidthImg
 
 def detectContoursFromImg( rgb,
             eclipse=(2,2),
-            rect=(1,1),
-            threshold=150 ):
+            rect=( 1,1),
+            threshold=15 ):
     #  _, small = cv2.threshold( small, threshold, 255.0, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, eclipse )
     grad = cv2.morphologyEx( rgb, cv2.MORPH_GRADIENT, kernel)
     _, bw = cv2.threshold(grad, threshold, 255.0, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, rect )
     connected = cv2.morphologyEx(bw, cv2.MORPH_CLOSE, kernel)
-    #  imshow( connected )
+    #  imshow( connected ); import ipdb; ipdb.set_trace()
     _,contours, hierarchy = cv2.findContours(connected.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE )
 
     #  Filter top level contours only
@@ -26,7 +26,7 @@ def detectContoursFromImg( rgb,
     for idx, h in enumerate(hierarchy[0]):
         if( h[3] == -1 ):
             topC.append( contours[idx] )
-    return ( grad, bw, connected, topC )
+    return topC, grad, bw, connected
 
 def markContoursImg( rgb, contours, minWidth=11 ):
     #  mask = np.zeros( rgb.shape, dtype=np.uint8)
@@ -45,14 +45,10 @@ class GlyphExtractor(object):
         self.imageFileBaseName = path.basename( imageFile )
         self.rgb = cv2.imread( imageFile )
 
-    def _detectContours( self, **kwargs ):
-        rgb = cv2.cvtColor( self.rgb, cv2.COLOR_BGR2GRAY)
-        ( grad, bw, connected, contours ) = detectContoursFromImg( rgb, **kwargs )
-        contours = [ cv2.boundingRect( contour ) for contour in contours ];
-        return ( grad, bw, connected, contours )
-
     def detectContours( self, **kwargs ):
-        ( grad, bw, connected, contours ) = self._detectContours( **kwargs )
+        rgb = cv2.cvtColor( self.rgb, cv2.COLOR_BGR2GRAY)
+        contours = detectContoursFromImg( rgb, **kwargs )[0]
+        contours = [ cv2.boundingRect( contour ) for contour in contours ];
         return contours
 
     def extractContours( self, contours, outdir='./cache/extracted', minWidth=11 ):
@@ -61,7 +57,8 @@ class GlyphExtractor(object):
         for idx, ( x, y, w, h ) in enumerate(contours):
             if( w > minWidth ):
                 croppedImg = rgb[y:y+h, x:x+w ]
-                cv2.imwrite( '%s/%s_%04d.png'%( outdir, self.imageFileBaseName, idx ), fixedWidthImg( croppedImg ) )
+                print( '%s/%s_%04d_%04d.png'%( outdir, self.imageFileBaseName, y, x ),  x, y )
+                cv2.imwrite( '%s/%s_%04d_%04d.png'%( outdir, self.imageFileBaseName, y, x ), fixedWidthImg( croppedImg ) )
 
     def markContours( self, contours, **kwargs ):
         return markContoursImg( self.rgb, contours, **kwargs )

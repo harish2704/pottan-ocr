@@ -24,7 +24,9 @@ var allGlyphs = {
   chillu:  _l('ൾ-ൽ-ൻ-ർ-ൺ'),
   chihnnas:   ["്", "ാ", "ി", "ീ", "ു", "ൂ", "ൃ",
     // "ൢ", "ൣ",
-    "ൄ", "െ", "േ", "ൗ", "ം", "ഃ"],
+    "ൄ", "െ", "േ", "ൗ",
+//     "ം", "ഃ"
+     ],
     numbers: _l('൦-൧-൨-൩-൪-൫-൬-൭-൮-൯' )
     // ( '-൰-൱-൲-൳-൴-൵'),
   };
@@ -56,5 +58,8 @@ allItems = [].concat(
   _l('0-1-2-3-4-5-6-7-8-9'),
 );
 
+var misc = [
+'്വ'
+];
 
-console.log( allItems.join('\n') );
+console.log( allItems.concat(misc).join('\n') );
