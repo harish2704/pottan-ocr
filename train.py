@@ -10,7 +10,6 @@ import numpy as np
 from warpctc_pytorch import CTCLoss
 import os
 import utils
-from utils import alignCollate
 import string_converter as converter
 
 import models.crnn as crnn
@@ -196,9 +195,11 @@ def trainBatch(net, criterion, optimizer):
 
 
 for epoch in range(opt.niter):
+    print( 'Epoch %d' % epoch )
     train_iter = iter(train_loader)
     i = 0
     while i < len(train_loader):
+        print('Iteration %d' % i)
         for p in crnn.parameters():
             p.requires_grad = True
         crnn.train()
