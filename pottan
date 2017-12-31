@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 datagen(){
+  ./gen-glyph-list.js
   python3 ./data_gen.py
 }
 
