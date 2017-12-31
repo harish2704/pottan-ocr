@@ -3,7 +3,7 @@ import re
 from utils import readJson
 from torch import IntTensor
 
-glyphList = [ v for v in readJson('./cache/glyph_labels.json') ]
+glyphList = [ v for v in readJson('./data/glyphs.json') ]
 glyphList.sort( key=lambda x: len(x), reverse=True);
 
 glyphSearchRe =  '|'.join(glyphList)

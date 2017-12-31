@@ -76,5 +76,5 @@ var misc = [
   '[',']',
 ];
 
-fs.writeFileSync( './cache/glyph_labels.json', JSON.stringify( allItems.concat(misc) ) );
+fs.writeFileSync( './data/glyphs.json', JSON.stringify( allItems.concat(misc) ) );
 
