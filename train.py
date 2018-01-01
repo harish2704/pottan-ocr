@@ -157,6 +157,9 @@ def val(net, dataset, criterion, max_iter=100):
         data = val_iter.next()
         i += 1
         cpu_images, cpu_texts = data
+        # Convert to float
+        cpu_images = cpu_images.type( torch.FloatTensor )
+
         batch_size = cpu_images.size(0)
         t, l = converter.encode(cpu_texts)
         image = Variable( cpu_images )
