@@ -6,6 +6,10 @@
 
 var bigXml = require('big-xml');
 var infile = process.argv[2];
+if( !infile || ( infile === '--help' ) ){
+  console.log('Usage: node ./collect-wiki-data.js <wiki_dump.xml>');
+  process.exit(-1);
+}
 
 var reader = bigXml.createReader( infile, /^(text)$/ );
 
