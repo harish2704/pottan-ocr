@@ -71,7 +71,7 @@ train_loader = torch.utils.data.DataLoader(
     #  collate_fn=alignCollate(imgH=opt.imgH, imgW=opt.imgW, keep_ratio=True)
     )
 
-train_dataset = np.load( opt.valdata )['arr_0'].tolist()
+test_dataset = np.load( opt.valdata )['arr_0'].tolist()
 
 nclass = len( utils.readJson('./data/glyphs.json')) + 1
 print('Number of char class = %d' % nclass )
