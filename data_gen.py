@@ -52,10 +52,11 @@ zwjMapping = {
         'ല്‍': 'ൽ',
         'ന്‍': 'ൻ',
         'ണ്‍': 'ൺ',
-        'ര്‍': 'ർ'
+        'ര്‍': 'ർ',
+        'ക്‍': 'ൿ',
         }
 zwnjChilluRe = re.compile( '(' + '|'.join(zwjMapping.keys()) + ')' )
-zwnjRe = re.compile('‌')
+zwnjRe = re.compile('[‌‍]')
 
 
 
@@ -70,22 +71,29 @@ def preProcess( kind ):
 
     # Replace all zwnj chillus with atomic chillu
     words = zwnjChilluRe.sub( lambda g: zwjMapping[ g.group(0) ], words )
-    words = re.sub('[”“]', '"', words )
-    # Rm English letters
-    words = re.sub('[a-zA-Z]', '', words )
 
-    words = filter( None, re.split('[\n\ ]', words ) )
+    words = filter( None, re.split('‌*[\n\ ]', words ) )
     words = list(set( words ))
+    goodWords = []
+    total = len( words )
     for idx, w in enumerate(words):
+        if( idx % 10000 == 0 ):
+            print( 'preProcess %4.2f %%' % ( idx*100/total ) )
         try:
             encodeStr( w )
+            goodWords.append( w )
         except Exception as e:
-            if( e.args[0] == "'\\u200c' is not in list" ):
-                print('Replacing zwj in "%s"' % w )
-                words[idx] = zwnjRe.sub('', w )
+            if( re.match( ".*u200[cd].* is not in list", e.args[0] ) ):
+                #  print('Replacing zwj in "%s"' % w )
+                goodWords.append( zwnjRe.sub('', w ) )
             else:
-                raise e
-    writeFile( txtFile, ' '.join( words ))
+                pass
+                #  print( 'Omiting "%s"' % w, e )
+                #  import ipdb; ipdb.set_trace()
+                #  raise e
+    goodWords = list( filter( lambda x: len(x)< 27, goodWords ) )
+    goodWords.sort(key=lambda x: len(x), reverse=True )
+    writeFile( txtFile, '\n'.join( goodWords ))
 
 
 
@@ -95,10 +103,13 @@ def preProcess( kind ):
 def computeDataset( words, font='AnjaliOldLipi' ):
     imgs = []
     labels = []
-    for word in words:
-        img = scribe( word, '%s 19' % font, 400, 32, 0, 3, 0 )
-        #  import ipdb; ipdb.set_trace()
+    total = len( words )
+    for idx, word in enumerate(words):
+        if( idx % 10000 == 0 ):
+            print( 'ComputeDataset %4.2f %%' % ( idx*100/total ) )
+        img = scribe( word, '%s 16' % font, 400, 32, 0, 3, 0 )
         img = np.invert( img )
+        #  import ipdb; ipdb.set_trace()
         # Convert into 1xWxH  
         img = np.expand_dims( img, axis=0 )
         imgs.append( img )
@@ -116,28 +127,39 @@ def createDataset( kind ):
 
 # function for self testing.
 # Encode each wrod, then decode it back
-def testEncoding( kind='validate'):
+def testEncoding( kind='validate' ):
     words = extractWords( WORD_LIST_FILE % kind )
     for w in words:
         enc, encSize = encodeStr( w )
         dec  = decodeStr( enc )
         if( w != dec ):
-            raise ValueError('%s != %s'% ( w, dec ) )
+            raise ValueError('Encoding failed "%s" != "%s"'% ( w, dec ) )
 
 
-def main( kind ):
-    print('Pre-processing %s' % kind )
-    preProcess( kind )
+def main( opt ):
+    kind = opt.name
 
-    print('Testing encodability of  "%s" dataset' % kind )
-    testEncoding( kind )
+    if( not opt.skip_preprocessing ):
+        print('Pre-processing %s' % kind )
+        preProcess( kind )
 
-    print( 'Create dataset %s' % kind )
-    createDataset( kind )
+    if( not opt.skip_encodetest ):
+        print('Testing encodability of  "%s" dataset' % kind )
+        testEncoding( kind )
+
+    if( not opt.skip_creation ):
+        print( 'Create dataset %s' % kind )
+        createDataset( kind )
     print('Completed generating traindata for "%s" dataset\n\n' % kind )
 
 
 
 if( __name__ == '__main__' ):
-    main( 'validate' )
-    main( 'train' )
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--skip-preprocessing', action='store_true', help='Skip preprocessing of wordlist')
+    parser.add_argument('--skip-encodetest', action='store_true', help='Skip encodability test on wordlist')
+    parser.add_argument('--skip-creation', action='store_true', help='Skip dataset creation')
+    parser.add_argument('--name', required=True, help='name of dataset. ./data/<name>.txt should be present')
+    opt = parser.parse_args()
+    main( opt )
