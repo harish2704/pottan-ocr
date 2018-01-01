@@ -14,3 +14,6 @@ misc/warp_ctc_install
 misc/warp-ctc-pytorch_bindings
 misc/*.zip
 env.sh
+
+node_modules
+yarn-error.log

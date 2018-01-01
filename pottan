@@ -1,15 +1,20 @@
 #!/usr/bin/env bash
 
+
 datagen(){
   ./gen-glyph-list.js
-  python3 ./data_gen.py
+  python3 ./data_gen.py "$@"
+  # ipython3 --matplotlib=tk ./data_gen.py
 }
 
 train(){
+  python3 train.py "$@" # --traindata ./data/train_data.npz --valdata ./data/validate_data.npz
   # ipython3 --matplotlib=tk train.py -- --traindata ./data/train_data.npz --valdata ./data/validate_data.npz
-  python3 train.py --traindata ./data/train_data.npz --valdata ./data/validate_data.npz
 }
 
+extractWikiDump(){
+  node ./collect-wiki-data.js "$@"
+}
 
 
 
@@ -19,13 +24,17 @@ if [ -z $1 ]; then
 Usage:
 ./pottan <command> [ arguments ]
 
-List of available commands:
+List of available commands ( See '--help' of individual command for more details ):
 
-    datagen - Prepare training data from data/train.txt & data/validate.txt.
+    datagen         - Prepare training data from data/train.txt & data/validate.txt.
 
-    train   - Run the training
+    train           - Run the training
+
+    extractWikiDump - Extract words from wiki xml dump. Output written to stdout. Should be saved as data/<name>.txt
 EOF
 else
-  $1
+  cmd=$1
+  shift
+  $cmd "$@"
 fi
 
