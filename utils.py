@@ -2,12 +2,14 @@ import json
 import cv2
 import numpy as np
 from torch.autograd import Variable
+import gzip
 
 FINAL_W=32
 FINAL_H=32
 
 def readFile( fname ):
-    with open( fname, 'r') as f:
+    opener, mode = ( gzip.open, 'rt' ) if fname[-3:] == '.gz' else ( open, 'r' )
+    with opener( fname, mode ) as f:
         return f.read()
 
 def readJson( fname ):
