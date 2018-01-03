@@ -10,6 +10,7 @@ from warpctc_pytorch import CTCLoss
 import os
 import utils
 import string_converter as converter
+import datetime
 
 import models.crnn as crnn
 
@@ -90,6 +91,9 @@ test_loader = torch.utils.data.DataLoader(
 
 nclass = len( utils.readJson('./data/glyphs.json')) + 1
 print('Number of char class = %d' % nclass )
+
+
+#  No of channels I think
 nc = 1
 
 criterion = CTCLoss()
@@ -206,13 +210,13 @@ def val(net, criterion, max_iter=2):
     print('Test loss: %f, accuray: %f' % (loss_avg.val(), accuracy))
 
 
-def trainBatch(net, criterion, optimizer):
-    data = train_iter.next()
+def trainBatch( data ):
     cpu_images, cpu_texts = data
     #  import ipdb; ipdb.set_trace()
 
     batch_size = cpu_images.size(0)
     txts, lengths = converter.encode(cpu_texts)
+    #  import ipdb; ipdb.set_trace()
 
     #  image = Variable( cpu_images )
     #  text = Variable( txts )
@@ -230,17 +234,15 @@ def trainBatch(net, criterion, optimizer):
     return cost
 
 
-for epoch in range(opt.niter):
+def main( epoch ):
     print( 'Epoch %d' % epoch )
-    train_iter = iter(train_loader)
-    i = 0
-    while i < len(train_loader):
+    for i,batchData in enumerate(train_loader):
         print('Iteration %d' % i)
         for p in crnn.parameters():
             p.requires_grad = True
         crnn.train()
 
-        cost = trainBatch(crnn, criterion, optimizer)
+        cost = trainBatch( batchData )
         loss_avg.add(cost)
         i += 1
 
@@ -252,7 +254,18 @@ for epoch in range(opt.niter):
         if i % opt.valInterval == 0:
             val(crnn, criterion)
 
-        # do checkpointing
-        if i % opt.saveInterval == 0:
-            torch.save(
-                crnn.state_dict(), '{0}/netCRNN_{1}_{2}.pth'.format(opt.experiment, epoch, i))
+lasepoch=0
+for epoch in range(opt.niter):
+    try:
+        main( epoch )
+    except KeyboardInterrupt as e:
+        lasepoch=epoch
+        print('Exiting.....')
+        break
+
+
+
+print('Saving model...' )
+fname = '{0}/netCRNN_{2}_{1}.pth'.format(opt.experiment, epoch, datetime.datetime.now().strftime('%m-%d-%H-%M-%S') )
+torch.save( crnn.state_dict(), fname )
+print('Saved model "%s"' % fname )
