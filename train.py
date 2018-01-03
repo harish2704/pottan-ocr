@@ -2,7 +2,6 @@ from __future__ import print_function
 import argparse
 import random
 import torch
-import torch.backends.cudnn as cudnn
 import torch.optim as optim
 import torch.utils.data
 from torch.autograd import Variable
@@ -20,7 +19,6 @@ parser.add_argument('--valdata', required=True, help='path to dataset')
 parser.add_argument('--workers', type=int, help='number of data loading workers', default=1)
 parser.add_argument('--batchSize', type=int, default=64, help='input batch size')
 parser.add_argument('--imgH', type=int, default=32, help='the height of the input image to network')
-parser.add_argument('--imgW', type=int, default=100, help='the width of the input image to network')
 parser.add_argument('--nh', type=int, default=256, help='size of the lstm hidden state')
 parser.add_argument('--niter', type=int, default=25, help='number of epochs to train for')
 parser.add_argument('--lr', type=float, default=0.01, help='learning rate for Critic, default=0.00005')
@@ -50,7 +48,6 @@ random.seed(opt.manualSeed)
 np.random.seed(opt.manualSeed)
 torch.manual_seed(opt.manualSeed)
 
-cudnn.benchmark = True
 
 if torch.cuda.is_available() and not opt.cuda:
     print("WARNING: You have a CUDA device, so you should probably run with --cuda")
@@ -64,14 +61,32 @@ assert train_dataset
     #  sampler = None
 sampler = None
 
+def resizeNormalize( img ):
+    img = torch.FloatTensor( img.astype('f') )
+    img = ((img*2)/255 ) -1
+    return img
+
+def alignCollate( batch ):
+    images, labels = zip(*batch)
+    images = [ resizeNormalize(image) for image in images]
+    images = torch.cat([t.unsqueeze(0) for t in images], 0)
+    #  import ipdb; ipdb.set_trace()
+    return images, labels
+
 train_loader = torch.utils.data.DataLoader(
     train_dataset, batch_size=opt.batchSize,
     shuffle=True, sampler=sampler,
+    collate_fn=alignCollate,
     num_workers=int(opt.workers),
-    #  collate_fn=alignCollate(imgH=opt.imgH, imgW=opt.imgW, keep_ratio=True)
     )
 
+
+
 test_dataset = np.load( opt.valdata )['arr_0'].tolist()
+test_loader = torch.utils.data.DataLoader(
+            test_dataset, shuffle=True,
+            collate_fn=alignCollate,
+            batch_size=opt.batchSize, num_workers=int(opt.workers))
 
 nclass = len( utils.readJson('./data/glyphs.json')) + 1
 print('Number of char class = %d' % nclass )
@@ -106,8 +121,8 @@ if opt.crnn != '':
         for key in list(stateDict.keys()): 
             stateDict[ key[ 7:] ] = stateDict[key]
             del stateDict[ key ]
-    #  import ipdb; ipdb.set_trace()
     crnn.load_state_dict( stateDict )
+    print('Completed loading pre trained model')
 #  print(crnn)
 
 image = torch.FloatTensor(opt.batchSize, 3, opt.imgH, opt.imgH)
@@ -115,6 +130,8 @@ text = torch.IntTensor(opt.batchSize * 5)
 length = torch.IntTensor(opt.batchSize)
 
 if opt.cuda:
+    import torch.backends.cudnn as cudnn
+    cudnn.benchmark = True
     crnn.cuda()
     crnn = torch.nn.DataParallel(crnn, device_ids=range(opt.ngpu))
     image = image.cuda()
@@ -136,47 +153,49 @@ elif opt.adadelta:
 else:
     optimizer = optim.RMSprop(crnn.parameters(), lr=opt.lr)
 
+def loadData(v, data):
+    v.data.resize_(data.size()).copy_(data)
 
-def val(net, dataset, criterion, max_iter=100):
+def val(net, criterion, max_iter=2):
     print('Start val')
 
     for p in crnn.parameters():
         p.requires_grad = False
 
     net.eval()
-    data_loader = torch.utils.data.DataLoader(
-        dataset, shuffle=True, batch_size=opt.batchSize, num_workers=int(opt.workers))
-    val_iter = iter(data_loader)
+    val_iter = iter( train_loader )
 
     i = 0
     n_correct = 0
     loss_avg = utils.averager()
 
-    max_iter = min(max_iter, len(data_loader))
+    max_iter = min(max_iter, len( train_loader ))
     for i in range(max_iter):
         data = val_iter.next()
         i += 1
         cpu_images, cpu_texts = data
-        # Convert to float
-        cpu_images = cpu_images.type( torch.FloatTensor )
 
         batch_size = cpu_images.size(0)
-        t, l = converter.encode(cpu_texts)
-        image = Variable( cpu_images )
-        text = Variable( t )
-        length = Variable( l )
+        txts, lengths = converter.encode(cpu_texts)
+        #  image = Variable( cpu_images )
+        #  text = Variable( txts )
+        #  length = Variable( lengths )
+        loadData(image, cpu_images)
+        loadData(length, lengths)
+        loadData(text, txts)
 
         preds = crnn(image)
         preds_size = Variable(torch.IntTensor([preds.size(0)] * batch_size))
         cost = criterion(preds, text, preds_size, length) / batch_size
         loss_avg.add(cost)
 
+        #  import ipdb; ipdb.set_trace()
         _, preds = preds.max(2)
-        preds = preds.squeeze(2)
+        #  preds = preds.squeeze(2)
         preds = preds.transpose(1, 0).contiguous().view(-1)
         sim_preds = converter.decode(preds.data, preds_size.data, raw=False)
         for pred, target in zip(sim_preds, cpu_texts):
-            if pred == target.lower():
+            if pred == target:
                 n_correct += 1
 
     raw_preds = converter.decode(preds.data, preds_size.data, raw=True)[:opt.n_test_disp]
@@ -190,17 +209,18 @@ def val(net, dataset, criterion, max_iter=100):
 def trainBatch(net, criterion, optimizer):
     data = train_iter.next()
     cpu_images, cpu_texts = data
-    # Convert to float
-    cpu_images = cpu_images.type( torch.FloatTensor )
+    #  import ipdb; ipdb.set_trace()
 
     batch_size = cpu_images.size(0)
     txts, lengths = converter.encode(cpu_texts)
 
-    image = Variable( cpu_images )
-    text = Variable( txts )
-    length = Variable( lengths )
+    #  image = Variable( cpu_images )
+    #  text = Variable( txts )
+    #  length = Variable( lengths )
+    loadData(image, cpu_images)
+    loadData(length, lengths)
+    loadData(text, txts)
 
-    #  import ipdb; ipdb.set_trace()
     preds = crnn(image)
     preds_size = Variable(torch.IntTensor([preds.size(0)] * batch_size))
     cost = criterion(preds, text, preds_size, length) / batch_size
@@ -230,7 +250,7 @@ for epoch in range(opt.niter):
             loss_avg.reset()
 
         if i % opt.valInterval == 0:
-            val(crnn, test_dataset, criterion)
+            val(crnn, criterion)
 
         # do checkpointing
         if i % opt.saveInterval == 0:
