@@ -177,7 +177,7 @@ def val(net, criterion, max_iter=10):
         loadData(text, txts)
 
         preds = crnn(image)
-        preds_size = Variable(torch.IntTensor([preds.size(0)] * batch_size))
+        preds_size = Variable(torch.IntTensor( [preds.size(0)] * preds.size(1) ))
         cost = criterion(preds, text, preds_size, length) / batch_size
         loss_avg.add(cost)
 
@@ -212,7 +212,7 @@ def trainBatch( data ):
     loadData(text, txts)
 
     preds = crnn(image)
-    preds_size = Variable(torch.IntTensor([preds.size(0)] * batch_size))
+    preds_size = Variable(torch.IntTensor( [preds.size(0)] * preds.size(1) ))
     cost = criterion(preds, text, preds_size, length) / batch_size
     crnn.zero_grad()
     cost.backward()
