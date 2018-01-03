@@ -10,7 +10,7 @@ from warpctc_pytorch import CTCLoss
 import os
 import utils
 import string_converter as converter
-import datetime
+from datetime import datetime
 
 import models.crnn as crnn
 from dataset import TextDataset, alignCollate
@@ -28,7 +28,7 @@ parser.add_argument('--beta1', type=float, default=0.5, help='beta1 for adam. de
 parser.add_argument('--cuda', action='store_true', help='enables cuda')
 parser.add_argument('--ngpu', type=int, default=1, help='number of GPUs to use')
 parser.add_argument('--crnn', default='', help="path to crnn (to continue training)")
-parser.add_argument('--experiment', default=None, help='Where to store samples and models')
+parser.add_argument('--outdir', default=None, help='Where to store samples and models')
 parser.add_argument('--displayInterval', type=int, default=500, help='Interval to be displayed')
 parser.add_argument('--n_test_disp', type=int, default=10, help='Number of samples to display when test')
 parser.add_argument('--valInterval', type=int, default=500, help='Interval to be displayed')
@@ -40,9 +40,9 @@ parser.add_argument('--random_sample', action='store_true', help='whether to sam
 opt = parser.parse_args()
 print(opt)
 
-if opt.experiment is None:
-    opt.experiment = 'expr'
-os.system('mkdir {0}'.format(opt.experiment))
+if opt.outdir is None:
+    opt.outdir = 'expr'
+os.system('mkdir -p {0}'.format(opt.outdir))
 
 opt.manualSeed = random.randint(1, 10000)  # fix seed
 print("Random Seed: ", opt.manualSeed)
@@ -148,8 +148,8 @@ else:
 def loadData(v, data):
     v.data.resize_(data.size()).copy_(data)
 
-def val(net, criterion, max_iter=2):
-    print('Start val')
+def val(net, criterion, max_iter=10):
+    print('Validating...')
 
     for p in crnn.parameters():
         p.requires_grad = False
@@ -221,11 +221,15 @@ def trainBatch( data ):
     optimizer.step()
     return cost
 
+def saveModel( epoch=0 ):
+    print('Saving model...' )
+    fname = '{0}/netCRNN_{2}_{1}.pth'.format(opt.outdir, epoch, datetime.now().strftime('%m-%d-%H-%M-%S') )
+    torch.save( crnn.state_dict(), fname )
+    print('Saved model "%s"' % fname )
+
 
 def main( epoch ):
-    print( 'Epoch %d' % epoch )
     for i,batchData in enumerate(train_loader):
-        print('Iteration %d' % i)
         for p in crnn.parameters():
             p.requires_grad = True
         crnn.train()
@@ -235,25 +239,22 @@ def main( epoch ):
         i += 1
 
         if i % opt.displayInterval == 0:
-            print('[%d/%d][%d/%d] Loss: %f' %
-                  (epoch, opt.niter, i, len(train_loader), loss_avg.val()))
+            print('[ %s ][%d/%d][%d/%d] Loss: %f' %
+                  ( datetime.now().strftime('%H-%M-%S'), epoch, opt.niter, i, len(train_loader), loss_avg.val()))
             loss_avg.reset()
 
         if i % opt.valInterval == 0:
             val(crnn, criterion)
 
-lasepoch=0
+        if i % opt.saveInterval == 0:
+            saveModel( epoch )
+
 for epoch in range(opt.niter):
     try:
         main( epoch )
     except KeyboardInterrupt as e:
-        lasepoch=epoch
         print('Exiting.....')
         break
 
+saveModel()
 
-
-print('Saving model...' )
-fname = '{0}/netCRNN_{2}_{1}.pth'.format(opt.experiment, epoch, datetime.datetime.now().strftime('%m-%d-%H-%M-%S') )
-torch.save( crnn.state_dict(), fname )
-print('Saved model "%s"' % fname )
