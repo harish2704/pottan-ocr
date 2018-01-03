@@ -7,8 +7,6 @@ import re
 from unicode_text_to_image_array.scribe import scribe
 import numpy as np
 
-WORD_LIST_FILE = './data/%s.txt'
-DATA_FILE = './data/%s_data.npz'
 
 # fonts=[
 #         ('AnjaliOldLipi', ['regular', 'bold' ]),
@@ -41,12 +39,6 @@ DATA_FILE = './data/%s_data.npz'
 #         ]
 #
 
-def extractWords( txtFile ):
-    words = readFile( txtFile )
-    words = filter( None, re.split('[\n\ ]', words ) )
-    return list(set( words ))
-
-
 
 zwjMapping = {
         'ല്‍': 'ൽ',
@@ -60,40 +52,10 @@ zwnjRe = re.compile('[‌‍]')
 
 
 
-#  Pre-process input text file.
-#  Pre-processing includes the following steps
-#  * Convert ZWNJ based chillu to atomic chillu.
-#  * Remove/replace un-necessary chars
-#  * Then try encode each word. If it fails becuase of the presents of ZWJ char, then remove that ZWJ
-def preProcess( kind ):
-    txtFile = WORD_LIST_FILE % kind
+def extractWords( txtFile ):
     words = readFile( txtFile )
-
-    # Replace all zwnj chillus with atomic chillu
-    words = zwnjChilluRe.sub( lambda g: zwjMapping[ g.group(0) ], words )
-
-    words = filter( None, re.split('‌*[\n\ ]', words ) )
-    words = list(set( words ))
-    goodWords = []
-    total = len( words )
-    for idx, w in enumerate(words):
-        if( idx % 10000 == 0 ):
-            print( 'preProcess %4.2f %%' % ( idx*100/total ) )
-        try:
-            encodeStr( w )
-            goodWords.append( w )
-        except Exception as e:
-            if( re.match( ".*u200[cd].* is not in list", e.args[0] ) ):
-                #  print('Replacing zwj in "%s"' % w )
-                goodWords.append( zwnjRe.sub('', w ) )
-            else:
-                pass
-                #  print( 'Omiting "%s"' % w, e )
-                #  import ipdb; ipdb.set_trace()
-                #  raise e
-    goodWords = list( filter( lambda x: len(x)< 27, goodWords ) )
-    goodWords.sort(key=lambda x: len(x), reverse=True )
-    writeFile( txtFile, '\n'.join( goodWords ))
+    words = filter( None, re.split('[\n\ ]', words ) )
+    return list(set( words ))
 
 
 
@@ -118,48 +80,108 @@ def computeDataset( words, font='AnjaliOldLipi' ):
 
 
 
-def createDataset( kind ):
-    words = extractWords( WORD_LIST_FILE % kind )
-    imgs, labels = computeDataset( words )
-    np.savez_compressed(  DATA_FILE % kind, list(zip( imgs, labels )) )
+
+class DataGen:
+
+    def __init__(self, infile, outfile ):
+        self.WORD_LIST_FILE = infile
+        self.DATA_FILE = outfile
+
+
+    #  Pre-process input text file.
+    #  Pre-processing includes the following steps
+    #  * Convert ZWNJ based chillu to atomic chillu.
+    #  * Remove/replace un-necessary chars
+    #  * Then try encode each word. If it fails becuase of the presents of ZWJ char, then remove that ZWJ
+    def preProcess( self ):
+        txtFile = self.WORD_LIST_FILE
+        words = readFile( txtFile )
+
+        # Replace all zwnj chillus with atomic chillu
+        words = zwnjChilluRe.sub( lambda g: zwjMapping[ g.group(0) ], words )
+
+        words = filter( None, re.split('‌*[\n\ ]', words ) )
+        words = list(set( words ))
+        goodWords = []
+        total = len( words )
+        for idx, w in enumerate(words):
+            if( idx % 10000 == 0 ):
+                print( 'preProcess %4.2f %%' % ( idx*100/total ) )
+            try:
+                encodeStr( w )
+                goodWords.append( w )
+            except Exception as e:
+                if( re.match( ".*u200[cd].* is not in list", e.args[0] ) ):
+                    #  print('Replacing zwj in "%s"' % w )
+                    goodWords.append( zwnjRe.sub('', w ) )
+                else:
+                    pass
+                    #  print( 'Omiting "%s"' % w, e )
+                    #  import ipdb; ipdb.set_trace()
+                    #  raise e
+        goodWords = list( filter( lambda x: len(x)< 27, goodWords ) )
+        goodWords.sort(key=lambda x: len(x), reverse=True )
+        writeFile( txtFile, '\n'.join( goodWords ))
 
 
 
-# function for self testing.
-# Encode each wrod, then decode it back
-def testEncoding( kind='validate' ):
-    words = extractWords( WORD_LIST_FILE % kind )
-    for w in words:
-        enc, encSize = encodeStr( w )
-        dec  = decodeStr( enc )
-        if( w != dec ):
-            raise ValueError('Encoding failed "%s" != "%s"'% ( w, dec ) )
+
+    # function for self testing.
+    # Encode each wrod, then decode it back
+    def testEncoding( self ):
+        words = extractWords( self.WORD_LIST_FILE )
+        for w in words:
+            enc, encSize = encodeStr( w )
+            dec  = decodeStr( enc )
+            if( w != dec ):
+                raise ValueError('Encoding failed "%s" != "%s"'% ( w, dec ) )
+
+
+
+    def createDataset( self ):
+        words = extractWords( self.WORD_LIST_FILE )
+        imgs, labels = computeDataset( words )
+        np.savez_compressed( self.DATA_FILE, list(zip( imgs, labels )) )
+
+
+
+
 
 
 def main( opt ):
-    kind = opt.name
+    dg = DataGen( opt.input, opt.output )
+    if( opt.preprocess ):
+        print('Pre-processing' )
+        dg.preProcess()
 
-    if( not opt.skip_preprocessing ):
-        print('Pre-processing %s' % kind )
-        preProcess( kind )
-
-    if( not opt.skip_encodetest ):
-        print('Testing encodability of  "%s" dataset' % kind )
-        testEncoding( kind )
+    if( opt.testencoding ):
+        print('Testing encodability of  dataset' )
+        dg.testEncoding()
 
     if( not opt.skip_creation ):
-        print( 'Create dataset %s' % kind )
-        createDataset( kind )
-    print('Completed generating traindata for "%s" dataset\n\n' % kind )
+        print( 'Create dataset' )
+        dg.createDataset()
+    print('Completed generating traindata for dataset\n\n' )
 
 
 
 if( __name__ == '__main__' ):
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--skip-preprocessing', action='store_true', help='Skip preprocessing of wordlist')
-    parser.add_argument('--skip-encodetest', action='store_true', help='Skip encodability test on wordlist')
+    parser.add_argument('--preprocess', action='store_true', help='preprocess wordlist and save it back to disk')
+    parser.add_argument('--testencoding', action='store_true', help='do encodability test on each workd in the wordlist')
     parser.add_argument('--skip-creation', action='store_true', help='Skip dataset creation')
-    parser.add_argument('--name', required=True, help='name of dataset. ./data/<name>.txt should be present')
+    parser.add_argument('--input', help='input text file contains words')
+    parser.add_argument('--output', help='output numpy data file')
+    parser.add_argument('--name', help='name of dataset. ( Ie, input=./data/<name>.txt , output=./data/<name>_data.npz )')
     opt = parser.parse_args()
+    if( opt.name ):
+        opt.input = './data/%s.txt' % opt.name
+        opt.output = './data/%s_data.npz' % opt.name
+    elif( opt.input and opt.output ):
+        pass
+    else:
+        parser.error("Either '--name' or both '--input' and '--output' need to be specified")
+
     main( opt )
+
