@@ -8,8 +8,8 @@ datagen(){
 }
 
 train(){
-  python3 train.py "$@" # --traindata ./data/train_data.npz --valdata ./data/validate_data.npz
-  # ipython3 --matplotlib=tk train.py -- --traindata ./data/train_data.npz --valdata ./data/validate_data.npz
+  python3 train.py "$@"
+  # ipython3 --matplotlib=tk train.py -- "$@"
 }
 
 extractWikiDump(){
