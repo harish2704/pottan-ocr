@@ -16,7 +16,7 @@ cd build
 cmake ../
 make install DESTDIR=$warp_ctc_target
 
-echo "export WARP_CTC_PATH=\"$warp_ctc_target\"" >> $thisDir/../env.sh
+echo "export WARP_CTC_PATH=\"$warp_ctc_target/usr/lib\"" >> $thisDir/../env.sh
 
 . $thisDir/../env.sh
 
