@@ -16,7 +16,7 @@ glyphSearchRe = re.compile( '(%s)' % glyphSearchRe)
 
 def encodeStr( word ):
     glyphs = filter( None, glyphSearchRe.split( word ) )
-    out = [ glyphList.index( g ) for g in  glyphs ]
+    out = [ glyphList.index( g )+1 for g in  glyphs ]
     return out, len( out )
 
 def encodeStrList( items ):
@@ -27,9 +27,15 @@ encode = encodeStrList
 
 
 def decodeStr( strEnc ):
-    glyphs = [ glyphList[ g ] for g in strEnc ]
+    glyphs = [ ( '-' if g==0 else glyphList[ g-1 ] ) for g in strEnc ]
     return ''.join( glyphs )
 
-def decodeStrList( items ):
-    return list( zip( *[ decodeStr(i) for i in items ] ) )
+def decodeStrList( mergedPres, sizeArr, raw=True ):
+    i=0
+    out =  []
+    for size in sizeArr:
+        end = i+size
+        out.append( decodeStr( mergedPres[i:end] ) )
+        i = end
+    return out
 decode = decodeStrList
