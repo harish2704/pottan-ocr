@@ -155,13 +155,13 @@ def val(net, criterion, max_iter=10):
         p.requires_grad = False
 
     net.eval()
-    val_iter = iter( train_loader )
+    val_iter = iter( test_loader )
 
     i = 0
     n_correct = 0
     loss_avg = utils.averager()
 
-    max_iter = min(max_iter, len( train_loader ))
+    max_iter = min(max_iter, len( test_loader ))
     for i in range(max_iter):
         data = val_iter.next()
         i += 1
@@ -200,11 +200,9 @@ def val(net, criterion, max_iter=10):
 
 def trainBatch( data ):
     cpu_images, cpu_texts = data
-    #  import ipdb; ipdb.set_trace()
 
     batch_size = cpu_images.size(0)
     txts, lengths = converter.encode(cpu_texts)
-    #  import ipdb; ipdb.set_trace()
 
     #  image = Variable( cpu_images )
     #  text = Variable( txts )
