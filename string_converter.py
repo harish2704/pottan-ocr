@@ -13,10 +13,12 @@ glyphSearchRe = re.sub(r"[(){}\[\]\/\\.*?+-]", r"\\\g<0>", glyphSearchRe)
 
 glyphSearchRe = re.compile( '(%s)' % glyphSearchRe)
 
+# Empty string stands for blank
+glyphList.insert(0, '')
 
 def encodeStr( word ):
     glyphs = filter( None, glyphSearchRe.split( word ) )
-    out = [ glyphList.index( g )+1 for g in  glyphs ]
+    out = [ glyphList.index( g ) for g in  glyphs ]
     return out, len( out )
 
 def encodeStrList( items ):
@@ -26,8 +28,8 @@ encode = encodeStrList
 
 
 
-def decodeStr( strEnc ):
-    glyphs = [ ( '-' if g==0 else glyphList[ g-1 ] ) for g in strEnc ]
+def decodeStr( strEnc, raw=True ):
+    glyphs = [ ( glyphList[ g ] if raw or strEnc[ idx-1 ] != g else '') for idx,g in enumerate(strEnc) ]
     return ''.join( glyphs )
 
 def decodeStrList( mergedPres, sizeArr, raw=True ):
@@ -35,7 +37,7 @@ def decodeStrList( mergedPres, sizeArr, raw=True ):
     out =  []
     for size in sizeArr:
         end = i+size
-        out.append( decodeStr( mergedPres[i:end] ) )
+        out.append( decodeStr( mergedPres[i:end], raw ) )
         i = end
     return out
 decode = decodeStrList
