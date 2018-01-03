@@ -25,6 +25,7 @@ var allGlyphs = {
   chillu:  _l('ൾ-ൽ-ൻ-ർ-ൺ'),
   chihnnas:   ["്", "ാ", "ി", "ീ", "ു", "ൂ", "ൃ",
     'ോ', 'ൊ' ,'ഈ', 'ൈ' , 'ഊ', 'ഓ', 'ഐ',  'ൌ', 'ൎ', 'ഔ',
+    'ഩ',
     // "ൢ", "ൣ",
     "ൄ", "െ", "േ", "ൗ",
     "ം", "ഃ"
@@ -87,6 +88,7 @@ var misc = [
   ',',
   '&',
   '#',
+  '^',
   ];
 
 fs.writeFileSync( './data/glyphs.json', JSON.stringify( allItems.concat(misc), null, 1 ) );

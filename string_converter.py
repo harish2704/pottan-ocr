@@ -9,7 +9,7 @@ glyphList.sort( key=lambda x: len(x), reverse=True);
 glyphSearchRe =  '|'.join(glyphList)
 
 #  escape chars like ", ; ) ( ] [ ? *" for regex
-glyphSearchRe = re.sub(r"[(){}\[\]\/\\.*?+-]", r"\\\g<0>", glyphSearchRe)
+glyphSearchRe = re.sub(r"[(){}\[\]\/\\.*?+\-^]", r"\\\g<0>", glyphSearchRe)
 
 glyphSearchRe = re.compile( '(%s)' % glyphSearchRe)
 
