@@ -58,6 +58,11 @@ def extractWords( txtFile ):
     return list(set( words ))
 
 
+def renderText( word, font='AnjaliOldLipi' ):
+    img = scribe( word, '%s 16' % font, 400, 32, 0, 3, 0 )
+    img = np.invert( img )
+    # Convert into 1xWxH  
+    return np.expand_dims( img, axis=0 )
 
 #  Generate image as nupy array for a unicode text.
 #  We are using fixed width because torch.DataLoader expect a fixed size array
@@ -69,12 +74,7 @@ def computeDataset( words, font='AnjaliOldLipi' ):
     for idx, word in enumerate(words):
         if( idx % 10000 == 0 ):
             print( 'ComputeDataset %4.2f %%' % ( idx*100/total ) )
-        img = scribe( word, '%s 16' % font, 400, 32, 0, 3, 0 )
-        img = np.invert( img )
-        #  import ipdb; ipdb.set_trace()
-        # Convert into 1xWxH  
-        img = np.expand_dims( img, axis=0 )
-        imgs.append( img )
+        imgs.append( renderText( word )  )
         labels.append( word )
     return imgs, labels
 

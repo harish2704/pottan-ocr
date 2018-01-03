@@ -3,7 +3,7 @@ import re
 from utils import readJson
 from torch import IntTensor
 
-glyphList = [ v for v in readJson('./data/glyphs.json') ]
+glyphList = readJson('./data/glyphs.json')
 glyphList.sort( key=lambda x: len(x), reverse=True);
 
 glyphSearchRe =  '|'.join(glyphList)
@@ -15,6 +15,7 @@ glyphSearchRe = re.compile( '(%s)' % glyphSearchRe)
 
 # Empty string stands for blank
 glyphList.insert(0, '')
+totalGlyphs = len( glyphList )
 
 def encodeStr( word ):
     glyphs = filter( None, glyphSearchRe.split( word ) )

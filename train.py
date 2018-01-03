@@ -13,6 +13,7 @@ import string_converter as converter
 import datetime
 
 import models.crnn as crnn
+from dataset import TextDataset, alignCollate
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--traindata', required=True, help='path to dataset')
@@ -53,27 +54,16 @@ torch.manual_seed(opt.manualSeed)
 if torch.cuda.is_available() and not opt.cuda:
     print("WARNING: You have a CUDA device, so you should probably run with --cuda")
 
-train_dataset = np.load( opt.traindata )['arr_0'].tolist()
-assert train_dataset
-
 #  if not opt.random_sample:
     #  sampler = dataset.randomSequentialSampler(train_dataset, opt.batchSize)
 #  else:
     #  sampler = None
 sampler = None
 
-def resizeNormalize( img ):
-    img = torch.FloatTensor( img.astype('f') )
-    img = ((img*2)/255 ) -1
-    return img
 
-def alignCollate( batch ):
-    images, labels = zip(*batch)
-    images = [ resizeNormalize(image) for image in images]
-    images = torch.cat([t.unsqueeze(0) for t in images], 0)
-    #  import ipdb; ipdb.set_trace()
-    return images, labels
 
+train_dataset = TextDataset( opt.traindata )
+assert train_dataset
 train_loader = torch.utils.data.DataLoader(
     train_dataset, batch_size=opt.batchSize,
     shuffle=True, sampler=sampler,
@@ -81,15 +71,13 @@ train_loader = torch.utils.data.DataLoader(
     num_workers=int(opt.workers),
     )
 
-
-
-test_dataset = np.load( opt.valdata )['arr_0'].tolist()
+test_dataset = TextDataset( opt.valdata )
 test_loader = torch.utils.data.DataLoader(
             test_dataset, shuffle=True,
             collate_fn=alignCollate,
             batch_size=opt.batchSize, num_workers=int(opt.workers))
 
-nclass = len( utils.readJson('./data/glyphs.json')) + 1
+nclass = converter.totalGlyphs
 print('Number of char class = %d' % nclass )
 
 
