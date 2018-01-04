@@ -15,7 +15,6 @@ def alignCollate( batch ):
     images, labels = zip(*batch)
     images = [ normaizeImg(image) for image in images]
     images = torch.cat([t.unsqueeze(0) for t in images], 0)
-    #  import ipdb; ipdb.set_trace()
     return images, labels
 
 

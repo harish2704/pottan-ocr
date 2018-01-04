@@ -100,21 +100,7 @@ def weights_init(m):
 crnn = crnn.CRNN(opt.imgH, nc, nclass, opt.nh)
 crnn.apply(weights_init)
 if opt.crnn != '':
-    print('loading pretrained model from %s' % opt.crnn)
-
-    if( opt.cuda ):
-        stateDict = torch.load(opt.crnn )
-    else:
-        stateDict = torch.load(opt.crnn, map_location={'cuda:0': 'cpu'} )
-
-
-    #  Handle the case of some old torch version. It will save the data as module.<xyz> . Handle it
-    if( list( stateDict.keys() )[0][:7] == 'module.' ):
-        for key in list(stateDict.keys()): 
-            stateDict[ key[ 7:] ] = stateDict[key]
-            del stateDict[ key ]
-    crnn.load_state_dict( stateDict )
-    print('Completed loading pre trained model')
+    utils.loadTrainedModel( crnn, opt )
 #  print(crnn)
 
 image = torch.FloatTensor(opt.batchSize, 3, opt.imgH, opt.imgH)
