@@ -17,6 +17,11 @@ extractWikiDump(){
 }
 
 
+ocr(){
+  python3 ocr.py "$@"
+  # ipython3 --matplotlib=tk train.py -- "$@"
+}
+
 
 
 if [ -z $1 ]; then
@@ -31,6 +36,8 @@ List of available commands ( See '--help' of individual command for more details
     train           - Run the training
 
     extractWikiDump - Extract words from wiki xml dump. Output written to stdout. Should be saved as data/<name>.txt
+
+    ocr             - Run charector recognition with a pre-trained model and image file
 EOF
 else
   cmd=$1

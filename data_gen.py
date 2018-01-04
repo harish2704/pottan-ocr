@@ -64,7 +64,7 @@ def renderText( word, font='AnjaliOldLipi' ):
     # Convert into 1xWxH  
     return np.expand_dims( img, axis=0 )
 
-#  Generate image as nupy array for a unicode text.
+#  Generate image as numpy array for a unicode text.
 #  We are using fixed width because torch.DataLoader expect a fixed size array
 # scribe function will fill the extra space with white/black color
 def computeDataset( words, font='AnjaliOldLipi' ):
