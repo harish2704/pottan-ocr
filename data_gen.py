@@ -6,6 +6,8 @@ import re
 
 from unicode_text_to_image_array.scribe import scribe
 import numpy as np
+import os
+from PIL import Image
 
 
 # fonts=[
@@ -138,10 +140,18 @@ class DataGen:
 
 
 
-    def createDataset( self ):
+    def createDataset( self, saveType ):
         words = extractWords( self.WORD_LIST_FILE )
-        imgs, labels = computeDataset( words )
-        np.savez_compressed( self.DATA_FILE, list(zip( imgs, labels )) )
+        if( saveType == 'numpy' ):
+            imgs, labels = computeDataset( words )
+            np.savez_compressed( self.DATA_FILE, list(zip( imgs, labels )) )
+        else:
+            os.system('mkdir -p %s' % self.DATA_FILE )
+            for w in words:
+                img = renderText( w )
+                img = Image.fromarray( img[0] )
+                img.save( '%s/%s.png' %( self.DATA_FILE, w ) )
+
 
 
 
@@ -160,7 +170,7 @@ def main( opt ):
 
     if( not opt.skip_creation ):
         print( 'Create dataset' )
-        dg.createDataset()
+        dg.createDataset( opt )
     print('Completed generating traindata for dataset\n\n' )
 
 
@@ -173,11 +183,12 @@ if( __name__ == '__main__' ):
     parser.add_argument('--skip-creation', action='store_true', help='Skip dataset creation')
     parser.add_argument('--input', help='input text file contains words')
     parser.add_argument('--output', help='output numpy data file')
+    parser.add_argument('--format', choices=[ 'numpy', 'images' ], default='numpy', help='Format of output. Numpy array vs Directory of images' )
     parser.add_argument('--name', help='name of dataset. ( Ie, input=./data/<name>.txt , output=./data/<name>_data.npz )')
     opt = parser.parse_args()
     if( opt.name ):
         opt.input = './data/%s.txt' % opt.name
-        opt.output = './data/%s_data.npz' % opt.name
+        opt.output = './data/%s_data' % opt.name
     elif( opt.input and opt.output ):
         pass
     else:
