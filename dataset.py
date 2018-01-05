@@ -44,6 +44,5 @@ class TextDataset(Dataset):
         wordIdx = int( index / totalVariations )
         font, style = fontListFlat[ index % totalVariations ]
         label = self.words[ wordIdx ]
-        print( label, font, style, index, totalVariations )
         img = renderText( label, font=font, style=style )
         return ( img, label)
