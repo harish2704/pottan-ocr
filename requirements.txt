@@ -1,0 +1,6 @@
+numpy
+cffi
+cairocffi
+torch
+Pillow
+pyyaml
