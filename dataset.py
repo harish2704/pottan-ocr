@@ -2,7 +2,16 @@
 import torch
 from torch.utils.data import Dataset
 from data_gen import extractWords, renderText
+from utils import readYaml
 
+
+fontList = readYaml('./fontlist.yaml')
+fontListFlat = []
+for fnt, styles in fontList:
+    for style in styles:
+        fontListFlat.append([ fnt, style ])
+
+totalVariations = len(fontListFlat)
 
 
 def normaizeImg( img ):
@@ -25,12 +34,16 @@ class TextDataset(Dataset):
     def __init__(self, txtFile):
         self.txtFile = txtFile
         self.words = extractWords( txtFile )
+        self.itemCount = len( self.words )*totalVariations
 
     def __len__(self):
-        return len( self.words )
+        return self.itemCount
 
     def __getitem__(self, index):
-        assert index <= len(self), 'index range error'
-        label = self.words[index]
-        img = renderText( label )
+        assert index <= self.itemCount, 'index range error'
+        wordIdx = int( index / totalVariations )
+        font, style = fontListFlat[ index % totalVariations ]
+        label = self.words[ wordIdx ]
+        print( label, font, style, index, totalVariations )
+        img = renderText( label, font=font, style=style )
         return ( img, label)

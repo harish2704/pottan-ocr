@@ -9,39 +9,6 @@ import numpy as np
 import os
 from PIL import Image
 
-
-# fonts=[
-#         ('AnjaliOldLipi', ['regular', 'bold' ]),
-#         ('Chilanka', ['regular', 'bold', 'italic' ]),
-#         ('Dyuthi', ['regular', 'bold', 'italic', 'bold italic']),
-#         ('Kalyani', ['regular', 'bold', 'italic', 'bold italic']),
-#         ('Karumbi', ['regular', 'bold', 'italic', 'bold italic']),
-#         #  It is already too tick. Rm bold
-#         ('Keraleeyam', ['regular', 'italic' ]),
-#         ('Lohit Malayalam', ['regular', 'bold', 'italic', 'bold italic']),
-#         ('Manjari', ['regular', 'bold', 'italic', 'bold italic']),
-#         ('Manjari,Manjari Thin', ['regular', 'italic']),
-#         ('Meera', ['regular', 'bold', 'italic', 'bold italic']),
-#         ('ML-NILA01', ['regular', 'bold', 'italic', 'bold italic']),
-#         ('ML-NILA02', ['regular', 'bold', 'italic', 'bold italic']),
-#         ('ML-NILA03', ['regular', 'bold', 'italic', 'bold italic']),
-#         ('ML-NILA04', ['regular', 'bold', 'italic', 'bold italic']),
-#         ('ML-NILA05', ['regular', 'bold', 'italic', 'bold italic']),
-#         ('ML-NILA06', ['regular', 'bold', 'italic', 'bold italic']),
-#         ('ML-NILA07', ['regular', 'bold', 'italic', 'bold italic']),
-#         ('Noto Sans Malayalam', ['regular', 'bold', 'italic', 'bold italic']),
-#         ('Noto Sans Malayalam UI', ['regular', 'bold', 'italic', 'bold italic']),
-#         ('Noto Serif Malayalam', ['regular', 'bold', 'italic', 'bold italic']),
-#         ('Rachana', ['regular', 'bold', 'italic', 'bold italic']),
-#         ('RaghuMalayalam', ['regular', 'bold', 'italic', 'bold italic']),
-#         ('Samyak Malayalam', ['regular', 'bold', 'italic', 'bold italic']),
-#         ('Suruma', ['regular', 'bold', 'italic', 'bold italic']),
-#         #  It is already too tick. Rm bold
-#         ('Uroob', ['regular', 'italic' ])
-#         ]
-#
-
-
 zwjMapping = {
         'ല്‍': 'ൽ',
         'ന്‍': 'ൻ',
@@ -60,8 +27,8 @@ def extractWords( txtFile ):
     return list(set( words ))
 
 
-def renderText( word, font='AnjaliOldLipi' ):
-    img = scribe( word, '%s 16' % font, 400, 32, 0, 3, 0 )
+def renderText( word, font='AnjaliOldLipi', style='regular', yoffset=3 ):
+    img = scribe( word, '%s %s 16' % ( font, style ), 400, 32, 0, yoffset, 0 )
     img = np.invert( img )
     # Convert into 1xWxH  
     return np.expand_dims( img, axis=0 )
@@ -69,14 +36,14 @@ def renderText( word, font='AnjaliOldLipi' ):
 #  Generate image as numpy array for a unicode text.
 #  We are using fixed width because torch.DataLoader expect a fixed size array
 # scribe function will fill the extra space with white/black color
-def computeDataset( words, font='AnjaliOldLipi' ):
+def computeDataset( words, **kwargs ):
     imgs = []
     labels = []
     total = len( words )
     for idx, word in enumerate(words):
         if( idx % 10000 == 0 ):
             print( 'ComputeDataset %4.2f %%' % ( idx*100/total ) )
-        imgs.append( renderText( word )  )
+        imgs.append( renderText( word, **kwargs )  )
         labels.append( word )
     return imgs, labels
 
@@ -140,15 +107,15 @@ class DataGen:
 
 
 
-    def createDataset( self, saveType ):
+    def createDataset( self, opts ):
         words = extractWords( self.WORD_LIST_FILE )
-        if( saveType == 'numpy' ):
-            imgs, labels = computeDataset( words )
+        if( opts.format == 'numpy' ):
+            imgs, labels = computeDataset( words, font=opts.font, style=opts.style )
             np.savez_compressed( self.DATA_FILE, list(zip( imgs, labels )) )
         else:
             os.system('mkdir -p %s' % self.DATA_FILE )
             for w in words:
-                img = renderText( w )
+                img = renderText( w, font=opts.font, style=opts.style )
                 img = Image.fromarray( img[0] )
                 img.save( '%s/%s.png' %( self.DATA_FILE, w ) )
 
@@ -183,6 +150,8 @@ if( __name__ == '__main__' ):
     parser.add_argument('--skip-creation', action='store_true', help='Skip dataset creation')
     parser.add_argument('--input', help='input text file contains words')
     parser.add_argument('--output', help='output numpy data file')
+    parser.add_argument('--font', default='AnjaliOldLipi', help='Name of the font')
+    parser.add_argument('--style', default='regular', choices=['regular', 'bold', 'Italic', 'bold italic' ], help='font style')
     parser.add_argument('--format', choices=[ 'numpy', 'images' ], default='numpy', help='Format of output. Numpy array vs Directory of images' )
     parser.add_argument('--name', help='name of dataset. ( Ie, input=./data/<name>.txt , output=./data/<name>_data.npz )')
     opt = parser.parse_args()

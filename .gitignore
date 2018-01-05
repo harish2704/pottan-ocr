@@ -18,3 +18,5 @@ env.sh
 node_modules
 yarn-error.log
 *.pth
+
+fontlist.yaml
