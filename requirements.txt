@@ -1,5 +1,6 @@
+# apt-get install python3-gi gir1.2-pango
+
+pycairo>1.2
 numpy
-cffi
-cairocffi
 Pillow
 pyyaml

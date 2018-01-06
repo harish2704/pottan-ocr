@@ -3,11 +3,40 @@
 from utils import readFile, writeFile
 from string_converter import encodeStr, decodeStr
 import re
-
-from unicode_text_to_image_array.scribe import scribe
 import numpy as np
 import os
 from PIL import Image
+import array
+
+import cairo
+import gi
+gi.require_version('Pango', '1.0')
+gi.require_version('PangoCairo', '1.0')
+from gi.repository import Pango, PangoCairo
+
+fontDescCache = {};
+
+def pangoRenderText( text, font, targetW, targetH, xoffset, yoffset, twist ):
+    """
+    twist - can be anything with in -1  to +1. +1 means maximum possible clockvise rotation, and -1 is maximum possible anticlockvise rotation
+    """
+    surface = cairo.ImageSurface(cairo.FORMAT_A8, targetW, targetH )
+    context = cairo.Context(surface)
+    pc = PangoCairo.create_context(context)
+    layout = PangoCairo.create_layout(context)
+    if( font in fontDescCache ):
+        fontDesc = fontDescCache[font]
+    else:
+        fontDesc = fontDescCache[font] = Pango.font_description_from_string( font )
+    layout.set_font_description(Pango.FontDescription( font ))
+    layout.set_text( text, -1 );
+    actualW, actualH = layout.get_pixel_size()
+    context.rotate( twis * targetH / actualW / 3 ) # found '3' is the best fit instead of '2' ( 2 from 2*pi )
+    PangoCairo.show_layout(context, layout)
+    data = surface.get_data()
+    return np.frombuffer(data, dtype=np.uint8).reshape(( targetH, targetW ))
+
+
 
 zwjMapping = {
         'ല്‍': 'ൽ',
@@ -28,14 +57,14 @@ def extractWords( txtFile ):
 
 
 def renderText( word, font='AnjaliOldLipi', style='regular', yoffset=3 ):
-    img = scribe( word, '%s %s 16' % ( font, style ), 400, 32, 0, yoffset, 0 )
+    img = pangoRenderText( word, '%s %s 16' % ( font, style ), 400, 32, 0, yoffset, 0 )
     img = np.invert( img )
     # Convert into 1xWxH  
     return np.expand_dims( img, axis=0 )
 
 #  Generate image as numpy array for a unicode text.
 #  We are using fixed width because torch.DataLoader expect a fixed size array
-# scribe function will fill the extra space with white/black color
+# pangoRenderText function will fill the extra space with white/black color
 def computeDataset( words, **kwargs ):
     imgs = []
     labels = []
@@ -89,7 +118,6 @@ class DataGen:
                     #  import ipdb; ipdb.set_trace()
                     #  raise e
         goodWords = list( filter( lambda x: len(x)< 27, goodWords ) )
-        goodWords.sort(key=lambda x: len(x), reverse=True )
         writeFile( txtFile, '\n'.join( goodWords ))
 
 
