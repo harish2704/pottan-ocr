@@ -15,7 +15,7 @@ var reader = bigXml.createReader( infile, /^(text)$/ );
 
 var i =0;
 var preProcess1 = new RegExp( '[\\[\\]\(\)\{\}\'"\-=\.\*_]{2,}', 'gm' );
-var nonMl = new RegExp('[^\\[\\]\-_\?\;\:\'\"\.\{\}0-9\u0d00-\u0d7f\u200C\u200D\ ]+', 'gm' );
+var nonMl = new RegExp('[^\\[\\]\-_\?\;!\:\'\"\.\{\}0-9\u0d00-\u0d7f\u200C\u200D\ ]+', 'gm' );
 var out = [];
 reader.on('record', function(record) {
   // console.log( i );
