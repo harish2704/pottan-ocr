@@ -31,7 +31,8 @@ def pangoRenderText( text, font, targetW, targetH, xoffset, yoffset, twist ):
     layout.set_font_description(Pango.FontDescription( font ))
     layout.set_text( text, -1 );
     actualW, actualH = layout.get_pixel_size()
-    context.rotate( twis * targetH / actualW / 3 ) # found '3' is the best fit instead of '2' ( 2 from 2*pi )
+    context.rotate( twist * targetH / actualW / 3 ) # found '3' is the best fit instead of '2' ( 2 from 2*pi )
+    context.translate( xoffset, yoffset )
     PangoCairo.show_layout(context, layout)
     data = surface.get_data()
     return np.frombuffer(data, dtype=np.uint8).reshape(( targetH, targetW ))
