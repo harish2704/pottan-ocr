@@ -16,7 +16,5 @@
     "url": "https://github.com/harish2704/pottan-ocr/issues"
   },
   "homepage": "https://github.com/harish2704/pottan-ocr#readme",
-  "dependencies": {
-    "big-xml": "^1.0.0"
-  }
+  "dependencies": {}
 }
