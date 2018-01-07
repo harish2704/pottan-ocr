@@ -6,36 +6,8 @@ import re
 import numpy as np
 import os
 from PIL import Image
-import array
+from dataset import TextDataset, extractWords
 
-import cairo
-import gi
-gi.require_version('Pango', '1.0')
-gi.require_version('PangoCairo', '1.0')
-from gi.repository import Pango, PangoCairo
-
-fontDescCache = {};
-
-def pangoRenderText( text, font, targetW, targetH, xoffset, yoffset, twist ):
-    """
-    twist - can be anything with in -1  to +1. +1 means maximum possible clockvise rotation, and -1 is maximum possible anticlockvise rotation
-    """
-    surface = cairo.ImageSurface(cairo.FORMAT_A8, targetW, targetH )
-    context = cairo.Context(surface)
-    pc = PangoCairo.create_context(context)
-    layout = PangoCairo.create_layout(context)
-    if( font in fontDescCache ):
-        fontDesc = fontDescCache[font]
-    else:
-        fontDesc = fontDescCache[font] = Pango.font_description_from_string( font )
-    layout.set_font_description(Pango.FontDescription( font ))
-    layout.set_text( text, -1 );
-    actualW, actualH = layout.get_pixel_size()
-    context.rotate( twist * targetH / actualW / 3 ) # found '3' is the best fit instead of '2' ( 2 from 2*pi )
-    context.translate( xoffset, yoffset )
-    PangoCairo.show_layout(context, layout)
-    data = surface.get_data()
-    return np.frombuffer(data, dtype=np.uint8).reshape(( targetH, targetW ))
 
 
 
@@ -48,36 +20,6 @@ zwjMapping = {
         }
 zwnjChilluRe = re.compile( '(' + '|'.join(zwjMapping.keys()) + ')' )
 zwnjRe = re.compile('[‌‍]')
-
-
-
-def extractWords( txtFile ):
-    words = readFile( txtFile )
-    words = filter( None, re.split('[\n\ ]', words ) )
-    return list(set( words ))
-
-
-def renderText( word, font='AnjaliOldLipi', style='regular', yoffset=3 ):
-    img = pangoRenderText( word, '%s %s 16' % ( font, style ), 400, 32, 0, yoffset, 0 )
-    img = np.invert( img )
-    # Convert into 1xWxH  
-    return np.expand_dims( img, axis=0 )
-
-#  Generate image as numpy array for a unicode text.
-#  We are using fixed width because torch.DataLoader expect a fixed size array
-# pangoRenderText function will fill the extra space with white/black color
-def computeDataset( words, **kwargs ):
-    imgs = []
-    labels = []
-    total = len( words )
-    for idx, word in enumerate(words):
-        if( idx % 10000 == 0 ):
-            print( 'ComputeDataset %4.2f %%' % ( idx*100/total ) )
-        imgs.append( renderText( word, **kwargs )  )
-        labels.append( word )
-    return imgs, labels
-
-
 
 
 class DataGen:
@@ -137,16 +79,16 @@ class DataGen:
 
 
     def createDataset( self, opts ):
-        words = extractWords( self.WORD_LIST_FILE )
+        dataset = TextDataset( self.WORD_LIST_FILE )
+        print( 'Dataset length=%d'%len(dataset))
         if( opts.format == 'numpy' ):
-            imgs, labels = computeDataset( words, font=opts.font, style=opts.style )
-            np.savez_compressed( self.DATA_FILE, list(zip( imgs, labels )) )
+            np.savez_compressed( self.DATA_FILE, list( dataset ))
         else:
             os.system('mkdir -p %s' % self.DATA_FILE )
-            for w in words:
-                img = renderText( w, font=opts.font, style=opts.style )
+            for idx in range(len(dataset)):
+                img, label = dataset[idx]
                 img = Image.fromarray( img[0] )
-                img.save( '%s/%s.png' %( self.DATA_FILE, w ) )
+                img.save( '%s/%s__%3d.png' %( self.DATA_FILE, label, idx ) )
 
 
 
@@ -179,8 +121,6 @@ if( __name__ == '__main__' ):
     parser.add_argument('--skip-creation', action='store_true', help='Skip dataset creation')
     parser.add_argument('--input', help='input text file contains words')
     parser.add_argument('--output', help='output numpy data file')
-    parser.add_argument('--font', default='AnjaliOldLipi', help='Name of the font')
-    parser.add_argument('--style', default='regular', choices=['regular', 'bold', 'Italic', 'bold italic' ], help='font style')
     parser.add_argument('--format', choices=[ 'numpy', 'images' ], default='numpy', help='Format of output. Numpy array vs Directory of images' )
     parser.add_argument('--name', help='name of dataset. ( Ie, input=./data/<name>.txt , output=./data/<name>_data.npz )')
     opt = parser.parse_args()

@@ -20,3 +20,4 @@ yarn-error.log
 *.pth
 
 fontlist.yaml
+*.png
