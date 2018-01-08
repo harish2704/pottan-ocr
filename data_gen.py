@@ -6,7 +6,7 @@ import re
 import numpy as np
 import os
 from PIL import Image
-from dataset import TextDataset, extractWords
+from dataset import TextDataset, getTrainingTexts
 
 
 
@@ -34,7 +34,7 @@ class DataGen:
     #  * Convert ZWNJ based chillu to atomic chillu.
     #  * Remove/replace un-necessary chars
     #  * Then try encode each word. If it fails becuase of the presents of ZWJ char, then remove that ZWJ
-    def preProcess( self ):
+    def preProcess( self, opt ):
         txtFile = self.WORD_LIST_FILE
         words = readFile( txtFile )
 
@@ -60,25 +60,30 @@ class DataGen:
                     #  print( 'Omiting "%s"' % w, e )
                     #  import ipdb; ipdb.set_trace()
                     #  raise e
-        goodWords = list( filter( lambda x: len(x)< 27, goodWords ) )
-        writeFile( txtFile, '\n'.join( goodWords ))
+        if( opt.update ):
+            goodWords = list( filter( lambda x: len(x)< 27, goodWords ) )
+            writeFile( txtFile, '\n'.join( goodWords ))
 
 
 
 
     # function for self testing.
     # Encode each wrod, then decode it back
-    def testEncoding( self ):
-        words = extractWords( self.WORD_LIST_FILE )
+    def testEncoding( self, opt ):
+        goodWords = []
+        words = getTrainingTexts( self.WORD_LIST_FILE )
         for w in words:
             try:
                 enc, encSize = encodeStr( w )
+                goodWords.append( w )
             except Exception as e:
                 print('Error encoding "%s"' % w, e )
                 continue
             dec  = decodeStr( enc )
             if( w != dec ):
                 raise ValueError('Encoding failed "%s" != "%s"'% ( w, dec ) )
+        if( opt.update ):
+            writeFile( self.WORD_LIST_FILE, '\n'.join( goodWords ))
 
 
 
@@ -104,11 +109,11 @@ def main( opt ):
     dg = DataGen( opt.input, opt.output )
     if( opt.preprocess ):
         print('Pre-processing' )
-        dg.preProcess()
+        dg.preProcess( opt )
 
     if( opt.testencoding ):
         print('Testing encodability of  dataset' )
-        dg.testEncoding()
+        dg.testEncoding( opt )
 
     if( not opt.skip_creation ):
         print( 'Create dataset' )
@@ -122,6 +127,7 @@ if( __name__ == '__main__' ):
     parser = argparse.ArgumentParser()
     parser.add_argument('--preprocess', action='store_true', help='preprocess wordlist and save it back to disk')
     parser.add_argument('--testencoding', action='store_true', help='do encodability test on each workd in the wordlist')
+    parser.add_argument('--update', action='store_true', help='Update input file after preProcess/testencoding')
     parser.add_argument('--skip-creation', action='store_true', help='Skip dataset creation')
     parser.add_argument('--input', help='input text file contains words')
     parser.add_argument('--output', help='output numpy data file')

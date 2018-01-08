@@ -53,10 +53,10 @@ def pangoRenderText( text, font, targetW, targetH, twist ):
     return np.frombuffer(data, dtype=np.uint8).reshape(( targetH, targetW ))
 
 
-def extractWords( txtFile ):
-    words = readFile( txtFile )
-    words = filter( None, re.split('[\n\ ]', words ) )
-    return list(set( words ))
+def getTrainingTexts( txtFile ):
+    lines = readFile( txtFile )
+    lines = filter( None, re.split('\n', lines ) )
+    return list(set( lines ))
 
 
 twistChoices = [ i/4 for i in range(-4,4) ]
@@ -85,7 +85,7 @@ class TextDataset(Dataset):
 
     def __init__(self, txtFile):
         self.txtFile = txtFile
-        self.words = extractWords( txtFile )
+        self.words = getTrainingTexts( txtFile )
         self.itemCount = len( self.words )*totalVariations
 
     def __len__(self):
