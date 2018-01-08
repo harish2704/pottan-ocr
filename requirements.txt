@@ -1,5 +1,9 @@
-# apt-get install python3-gi gir1.2-pango
+# apt-get -y install libgirepository1.0-dev
+# apt-get -y install python3-gi gir1.2-pango
+# pip3 install PyGobject
 
+
+cffi
 pycairo>1.2
 numpy
 Pillow
