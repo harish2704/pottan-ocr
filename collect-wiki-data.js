@@ -80,13 +80,15 @@ var zwjMapping = {
   'ാ‌':    'ാ',
 };
 var zwjRegex = '('+Object.keys(zwjMapping).join('|')+')';
-console.error( zwjRegex );
 zwjRegex = RegExp( zwjRegex, 'g');
 
 var preProcessPatterns = '('+ preProcessPatterns.join('|')+')';
 preProcessPatterns = new RegExp( preProcessPatterns, 'g');
 var matchingPattern = new RegExp('[\u0d00-\u0d7f\u200C\u200D][\u0d00-\u0d7f\u200C\u200D'+ symbolsTobeIncluded +']{2,}', 'g' );
+var whiteSpace = new RegExp('\\s+', 'g' );
+
 var parser = new Transform();
+parser.lastReadedLine = '';
 parser._transform = function(data, encoding, done) {
   data = data.toString();
   data = data.replace( preProcessPatterns, '')
@@ -94,9 +96,36 @@ parser._transform = function(data, encoding, done) {
     return zwjMapping[a] || '';
   });
   var match = data.toString().match( matchingPattern );
-  if( match ){
-    this.push( match.join('\n') );
+  if( !match ){
+    done();
+    return;
   }
+
+  // Convert long sentance into array of words
+  match = [].concat.apply( [], match.map(v=> v.split( whiteSpace ) ) );
+
+  var i=0,
+    sentance=this.lastReadedLine,
+    word,
+    total = match.length;
+
+  // Generate lines with maximum length 90
+  while( i< total ){
+    word = match[ i ];
+    if( ( sentance.length + word.length ) > 90 ){
+      if( sentance === "അല്മോദിബ്ളാഥയീമിൽ പാളയമിറങ്ങി. അല്മോദിബ്ളാഥയീമിൽനിന്നു പുറപ്പെട്ടു നെബോവിന്നു കിഴക്കു"){
+        console.log( word );
+        debugger;
+      }
+      this.push( sentance + '\n' );
+      sentance = word;
+    } else if(word){
+      // if( sentance[ sentance.length-1] === ' ' ){ debugger; }
+      sentance = sentance + ' ' + word
+    }
+    i++
+  }
+  this.lastReadedLine = sentance;
   done();
 };
 
