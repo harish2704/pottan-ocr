@@ -18,8 +18,17 @@ extractWikiDump(){
 
 
 ocr(){
-  rm -rf tmp/*
+
   fullPath="$1"
+  if [[ $1 == '--help' || $1 == '-h' || -z $fullPath ]];then
+cat<<EOF
+Usage: ./pottan ocr <iamge_path> [ options to ocr.py ]
+    - For details of options passed to orcr.py, see "python3 ./ocr.py --help"
+EOF
+  exit 0;
+  fi
+
+  rm -rf tmp/*
   shift
   baseName=$(basename "$fullPath")
   withoutExt="${baseName%.*}"
@@ -43,11 +52,11 @@ Usage:
 
 List of available commands ( See '--help' of individual command for more details ):
 
-    datagen         - Prepare training data from data/train.txt & data/validate.txt.
+    extractWikiDump - Extract words from wiki xml dump ( most most of the text corpus ). Output is written to stdout.
+
+    datagen         - Prepare training data from data/train.txt & data/validate.txt. ( Depreciated. used only for manual varification of training data )
 
     train           - Run the training
-
-    extractWikiDump - Extract words from wiki xml dump. Output written to stdout. Should be saved as data/<name>.txt
 
     ocr             - Run charector recognition with a pre-trained model and image file
 EOF

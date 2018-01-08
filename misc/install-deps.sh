@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 thisDir=$( dirname $( readlink -f $0 ) )
 
+echo "Initializing submodules"
+git submodule init
+git submodule update
+
+
 
 echo "Installing python dependecies ..."
 pip3 install -r $thisDir/../requirements.txt
