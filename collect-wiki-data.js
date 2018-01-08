@@ -57,15 +57,42 @@ var preProcessPatterns = [
 '\s{2,}',
 '&[^\s]*;',
 '\\\>',
-'[\\[\\]\\(\\)\\{\\}\'"\-=\.\*_]{2,}'
+'[\\[\\]\\(\\)\\{\\}\'"\-=\.\*_]{2,}',
+  '‌{2,}',
+  '‍{2,}',
+  '\s‍',
+'ൽ‍',
+'ൻ‍',
+'ൺ‍',
+'ർ‍',
 ];
 
-preProcessPatterns = new RegExp('('+ preProcessPatterns.join('|')+')', 'g');
+var zwjMapping = {
+  'ല്‍': 'ൽ',
+  'ന്‍': 'ൻ',
+  'ണ്‍': 'ൺ',
+  'ര്‍': 'ർ',
+  'ക്‍': 'ൿ',
+  '‌+$': '',
+  '‌\|': ' |',
+  '‌\.': ' .',
+  '‌ഷ': 'ഷ',
+  'ാ‌':    'ാ',
+};
+var zwjRegex = '('+Object.keys(zwjMapping).join('|')+')';
+console.error( zwjRegex );
+zwjRegex = RegExp( zwjRegex, 'g');
+
+var preProcessPatterns = '('+ preProcessPatterns.join('|')+')';
+preProcessPatterns = new RegExp( preProcessPatterns, 'g');
 var matchingPattern = new RegExp('[\u0d00-\u0d7f\u200C\u200D][\u0d00-\u0d7f\u200C\u200D'+ symbolsTobeIncluded +']{2,}', 'g' );
 var parser = new Transform();
 parser._transform = function(data, encoding, done) {
   data = data.toString();
   data = data.replace( preProcessPatterns, '')
+  data = data.replace( zwjRegex, function(a, b, c ){
+    return zwjMapping[a] || '';
+  });
   var match = data.toString().match( matchingPattern );
   if( match ){
     this.push( match.join('\n') );

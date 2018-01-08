@@ -71,7 +71,11 @@ class DataGen:
     def testEncoding( self ):
         words = extractWords( self.WORD_LIST_FILE )
         for w in words:
-            enc, encSize = encodeStr( w )
+            try:
+                enc, encSize = encodeStr( w )
+            except Exception as e:
+                print('Error encoding "%s"' % w, e )
+                continue
             dec  = decodeStr( enc )
             if( w != dec ):
                 raise ValueError('Encoding failed "%s" != "%s"'% ( w, dec ) )
