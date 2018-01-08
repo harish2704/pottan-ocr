@@ -21,3 +21,4 @@ yarn-error.log
 
 fontlist.yaml
 *.png
+tmp/*

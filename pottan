@@ -20,16 +20,16 @@ extractWikiDump(){
 ocr(){
   fullPath="$1"
   shift
-  baseName="$(basename $fullPath)"
+  baseName=$(basename "$fullPath")
   withoutExt="${baseName%.*}"
   workingCopy="./tmp/$baseName"
   linesDir="./tmp/$withoutExt"
   mkdir -p ./tmp
   cp "$fullPath" "$workingCopy"
   python ./ocropy/ocropus-gpageseg "$workingCopy"
-  python3  ./ocr.py "$@"  $linesDir/*.png
-  rename s/bin.txt/txt/ $linesDir/*.txt
-  python ./ocropy/ocropus-hocr $workingCopy -o ./tmp/out.html
+  python3  ./ocr.py "$@"  "$linesDir"/*.png
+  rename s/bin.txt/txt/ "$linesDir"/*.txt
+  python ./ocropy/ocropus-hocr "$workingCopy" -o ./tmp/out.html
   xdg-open ./tmp/out.html
 }
 
