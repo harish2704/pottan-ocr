@@ -11,15 +11,6 @@ from dataset import TextDataset, getTrainingTexts
 
 
 
-zwjMapping = {
-        'ല്‍': 'ൽ',
-        'ന്‍': 'ൻ',
-        'ണ്‍': 'ൺ',
-        'ര്‍': 'ർ',
-        'ക്‍': 'ൿ',
-        }
-zwnjChilluRe = re.compile( '(' + '|'.join(zwjMapping.keys()) + ')' )
-zwnjRe = re.compile('[‌‍]')
 
 
 class DataGen:
@@ -29,47 +20,12 @@ class DataGen:
         self.DATA_FILE = outfile
 
 
-    #  Pre-process input text file.
-    #  Pre-processing includes the following steps
-    #  * Convert ZWNJ based chillu to atomic chillu.
-    #  * Remove/replace un-necessary chars
-    #  * Then try encode each word. If it fails becuase of the presents of ZWJ char, then remove that ZWJ
-    def preProcess( self, opt ):
-        txtFile = self.WORD_LIST_FILE
-        words = readFile( txtFile )
 
-        # Replace all zwnj chillus with atomic chillu
-        words = zwnjChilluRe.sub( lambda g: zwjMapping[ g.group(0) ], words )
-
-        words = filter( None, re.split('‌*[\n\ ]', words ) )
-        words = list(set( words ))
-        goodWords = []
-        total = len( words )
-        for idx, w in enumerate(words):
-            if( idx % 10000 == 0 ):
-                print( 'preProcess %4.2f %%' % ( idx*100/total ) )
-            try:
-                encodeStr( w )
-                goodWords.append( w )
-            except Exception as e:
-                if( re.match( ".*u200[cd].* is not in list", e.args[0] ) ):
-                    #  print('Replacing zwj in "%s"' % w )
-                    goodWords.append( zwnjRe.sub('', w ) )
-                else:
-                    pass
-                    #  print( 'Omiting "%s"' % w, e )
-                    #  import ipdb; ipdb.set_trace()
-                    #  raise e
-        if( opt.update ):
-            goodWords = list( filter( lambda x: len(x)< 27, goodWords ) )
-            writeFile( txtFile, '\n'.join( goodWords ))
-
-
-
-
-    # function for self testing.
-    # Encode each wrod, then decode it back
     def testEncoding( self, opt ):
+        """
+        function for self testing.
+        Encode each wrod, then decode it back
+        """
         goodWords = []
         words = getTrainingTexts( self.WORD_LIST_FILE )
         for w in words:
@@ -107,9 +63,6 @@ class DataGen:
 
 def main( opt ):
     dg = DataGen( opt.input, opt.output )
-    if( opt.preprocess ):
-        print('Pre-processing' )
-        dg.preProcess( opt )
 
     if( opt.testencoding ):
         print('Testing encodability of  dataset' )
@@ -125,9 +78,8 @@ def main( opt ):
 if( __name__ == '__main__' ):
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--preprocess', action='store_true', help='preprocess wordlist and save it back to disk')
     parser.add_argument('--testencoding', action='store_true', help='do encodability test on each workd in the wordlist')
-    parser.add_argument('--update', action='store_true', help='Update input file after preProcess/testencoding')
+    parser.add_argument('--update', action='store_true', help='Update input file with valid data after testencoding')
     parser.add_argument('--skip-creation', action='store_true', help='Skip dataset creation')
     parser.add_argument('--input', help='input text file contains words')
     parser.add_argument('--output', help='output numpy data file')
