@@ -18,6 +18,7 @@ extractWikiDump(){
 
 
 ocr(){
+  rm -rf tmp/*
   fullPath="$1"
   shift
   baseName=$(basename "$fullPath")
@@ -26,7 +27,7 @@ ocr(){
   linesDir="./tmp/$withoutExt"
   mkdir -p ./tmp
   cp "$fullPath" "$workingCopy"
-  python ./ocropy/ocropus-gpageseg "$workingCopy"
+  python ./ocropy/ocropus-gpageseg "$workingCopy" -n
   python3  ./ocr.py "$@"  "$linesDir"/*.png
   rename s/bin.txt/txt/ "$linesDir"/*.txt
   python ./ocropy/ocropus-hocr "$workingCopy" -o ./tmp/out.html
