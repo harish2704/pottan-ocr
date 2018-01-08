@@ -53,7 +53,7 @@ class DataGen:
             for idx in range(len(dataset)):
                 img, label = dataset[idx]
                 img = Image.fromarray( img[0] )
-                img.save( '%s/%s__%3d.png' %( self.DATA_FILE, label, idx ) )
+                img.save( '%s/line_%s__%3d.png' %( self.DATA_FILE, dataset.words.index( label ), ( idx % dataset.variationCount ) ) )
 
 
 

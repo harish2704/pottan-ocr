@@ -62,7 +62,7 @@ def getTrainingTexts( txtFile ):
 twistChoices = [ i/4 for i in range(-4,4) ]
 
 def renderText( word, font='AnjaliOldLipi', style='regular' ):
-    img = pangoRenderText( word, '%s %s 16' % ( font, style ), 400, 32, choice( twistChoices ) )
+    img = pangoRenderText( word, '%s %s 16' % ( font, style ), 960, 32, choice( twistChoices ) )
     return np.invert( img )
 
 
@@ -86,6 +86,7 @@ class TextDataset(Dataset):
     def __init__(self, txtFile):
         self.txtFile = txtFile
         self.words = getTrainingTexts( txtFile )
+        self.variationCount = totalVariations
         self.itemCount = len( self.words )*totalVariations
 
     def __len__(self):

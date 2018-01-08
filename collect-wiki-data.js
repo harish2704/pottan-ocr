@@ -109,18 +109,18 @@ parser._transform = function(data, encoding, done) {
     word,
     total = match.length;
 
-  // Generate lines with maximum length 90
+  // Generate lines with maximum length N
   while( i< total ){
     word = match[ i ];
-    if( ( sentance.length + word.length ) > 90 ){
-      if( sentance === "അല്മോദിബ്ളാഥയീമിൽ പാളയമിറങ്ങി. അല്മോദിബ്ളാഥയീമിൽനിന്നു പുറപ്പെട്ടു നെബോവിന്നു കിഴക്കു"){
-        console.log( word );
-        debugger;
-      }
+    // if( word === ''){ debugger; }
+
+    
+    if( ( sentance.length + word.length ) > 55 ){
       this.push( sentance + '\n' );
-      sentance = word;
+
+      // if this is a single long word. Ignore it
+      sentance = word.length > 55 ?  '' : word ;
     } else if(word){
-      // if( sentance[ sentance.length-1] === ' ' ){ debugger; }
       sentance = sentance + ' ' + word
     }
     i++
