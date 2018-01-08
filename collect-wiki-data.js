@@ -43,6 +43,7 @@ var symbolsTobeIncluded = [
   '}',
   '~',
 ].join('');
+
 // Escape special chars used in regex
 symbolsTobeIncluded = symbolsTobeIncluded.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
 
@@ -58,14 +59,12 @@ var preProcessPatterns = [
 '&[^\s]*;',
 '\\\>',
 '[\\[\\]\\(\\)\\{\\}\'"\-=\.\*_]{2,}',
-  '‌{2,}',
-  '‍{2,}',
-  '\s‍',
-'ൽ‍',
-'ൻ‍',
-'ൺ‍',
-'ർ‍',
 ];
+
+
+// Replace all non zwj/zwnj
+// Ref http://thottingal.in/blog/2017/05/27/a-formal-grammar-for-malayalam-syllables/
+var unwantedZwj = new RegExp( '\([^്]|^\)[‌‍]+' , 'g' );
 
 var zwjMapping = {
   'ല്‍': 'ൽ',
@@ -73,17 +72,13 @@ var zwjMapping = {
   'ണ്‍': 'ൺ',
   'ര്‍': 'ർ',
   'ക്‍': 'ൿ',
-  '‌+$': '',
-  '‌\|': ' |',
-  '‌\.': ' .',
-  '‌ഷ': 'ഷ',
-  'ാ‌':    'ാ',
 };
 var zwjRegex = '('+Object.keys(zwjMapping).join('|')+')';
 zwjRegex = RegExp( zwjRegex, 'g');
 
 var preProcessPatterns = '('+ preProcessPatterns.join('|')+')';
 preProcessPatterns = new RegExp( preProcessPatterns, 'g');
+
 var matchingPattern = new RegExp('[\u0d00-\u0d7f\u200C\u200D][\u0d00-\u0d7f\u200C\u200D'+ symbolsTobeIncluded +']{2,}', 'g' );
 var whiteSpace = new RegExp('\\s+', 'g' );
 
@@ -92,10 +87,11 @@ parser.lastReadedLine = '';
 parser._transform = function(data, encoding, done) {
   data = data.toString();
   data = data.replace( preProcessPatterns, '')
-  data = data.replace( zwjRegex, function(a, b, c ){
+  data = data.replace( unwantedZwj, '$1');
+  data = data.replace( zwjRegex, function( a ){
     return zwjMapping[a] || '';
   });
-  var match = data.toString().match( matchingPattern );
+  var match = data.match( matchingPattern );
   if( !match ){
     done();
     return;
