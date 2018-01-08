@@ -2,6 +2,7 @@
 
 from PIL import Image
 
+from os.path import splitext
 import torch
 from torch.autograd import Variable
 import numpy as np
@@ -21,28 +22,34 @@ def loadImg( fname ):
     return normaizeImg( img )
 
 def evalModel( model, image ):
-    model.eval()
     image = image.view(1, *image.size())
-    #  import ipdb; ipdb.set_trace()
     image = Variable(image)
     preds = model(image)
     _, preds = preds.max(2)
     preds = preds.transpose(1, 0).contiguous().view(-1)
     preds_size = Variable(torch.IntTensor([preds.size(0)]))
-    raw_pred = converter.decode(preds.data, preds_size.data, raw=True)
-    sim_pred = converter.decode(preds.data, preds_size.data, raw=False)
-    print('%-20s => %-20s' % (raw_pred, sim_pred))
+    return converter.decode(preds.data, preds_size.data, raw=False)
 
 def main( opt ):
-    img = loadImg( opt.image_path )
+    #  import ipdb; ipdb.set_trace()
     model = crnn.CRNN(32, 1, converter.totalGlyphs, 256)
     utils.loadTrainedModel( model, opt )
-    evalModel( model, img )
+    model.eval()
+    for img_path in opt.image_paths:
+        img = loadImg( img_path )
+        text = evalModel( model, img )
+        if( opt.stdout ):
+            print('%s:::%s' %( img_path, text ))
+        else:
+            fname = '%s.txt'% splitext(img_path)[0]
+            utils.writeFile( fname, text[0] )
+
 
 if( __name__ == '__main__' ):
     parser = argparse.ArgumentParser()
-    parser.add_argument('image_path', help='Path image file')
+    parser.add_argument('image_paths', help='Path image file', nargs="+" )
     parser.add_argument('--crnn', required=True, help="path to pre trained model state ( .pth file)")
     parser.add_argument('--cuda', action='store_true', help='enables cuda')
+    parser.add_argument('--stdout', action='store_true', help='Write output to stdout instead of saving it as <imgfile>.txt')
     opt = parser.parse_args()
     main( opt )
