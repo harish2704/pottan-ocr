@@ -35,12 +35,14 @@ def main( opt ):
     model = crnn.CRNN(32, 1, converter.totalGlyphs, 256)
     utils.loadTrainedModel( model, opt )
     model.eval()
-    for img_path in opt.image_paths:
+    totalImages = len( opt.image_paths )
+    for idx, img_path in enumerate(opt.image_paths):
         img = loadImg( img_path )
         text = evalModel( model, img )
         if( opt.stdout ):
             print('%s:::%s' %( img_path, text ))
         else:
+            print('Processing line %2d / %2d' %( idx, totalImages ))
             fname = '%s.txt'% splitext(img_path)[0]
             utils.writeFile( fname, text[0] )
 
