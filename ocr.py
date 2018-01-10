@@ -11,6 +11,8 @@ from dataset import normaizeImg
 import argparse
 import models.crnn as crnn
 import string_converter as converter
+import multiprocessing
+import sys
 
 def loadImg( fname ):
     img = Image.open( fname ).convert('L')
@@ -21,7 +23,9 @@ def loadImg( fname ):
     img = np.expand_dims( img, axis=0 )
     return normaizeImg( img )
 
-def evalModel( model, image ):
+def evalModel( model, img_path, current, total ):
+    print( 'Progress %d/%d' %( current, total ), file=sys.stderr )
+    image = loadImg( img_path )
     image = image.view(1, *image.size())
     image = Variable(image)
     preds = model(image)
@@ -31,20 +35,20 @@ def evalModel( model, image ):
     return converter.decode(preds.data, preds_size.data, raw=False)
 
 def main( opt ):
-    #  import ipdb; ipdb.set_trace()
     model = crnn.CRNN(32, 1, converter.totalGlyphs, 256)
     utils.loadTrainedModel( model, opt )
     model.eval()
     totalImages = len( opt.image_paths )
-    for idx, img_path in enumerate(opt.image_paths):
-        img = loadImg( img_path )
-        text = evalModel( model, img )
+    pool = multiprocessing.Pool( multiprocessing.cpu_count() )
+    results = [ pool.apply_async( evalModel, ( model, img_path, idx, totalImages ) ) for idx, img_path in enumerate( opt.image_paths ) ]
+    for idx, result in enumerate( results ):
+        img_path = opt.image_paths[ idx ]
+        text = result.get()[0]
         if( opt.stdout ):
-            print('%s:::%s' %( img_path, text ))
+            print('%s:::%s' %( img_path, [ text ] ))
         else:
-            print('Processing line %2d / %2d' %( idx, totalImages ))
-            fname = '%s.txt'% splitext(img_path)[0]
-            utils.writeFile( fname, text[0] )
+            fname = '%s.txt'% splitext( img_path )[0]
+            utils.writeFile( fname, text )
 
 
 if( __name__ == '__main__' ):
