@@ -19,11 +19,11 @@ extractWikiDump(){
 
 ocr(){
 
-  fullPath="$1"
-  if [[ $1 == '--help' || $1 == '-h' || -z $fullPath ]];then
+  crnnPath="$1"
+  fullPath="$2"
+  if [[ $1 == '--help' || $1 == '-h' || -z $1 ]];then
 cat<<EOF
-Usage: ./pottan ocr <iamge_path> [ options to ocr.py ]
-    - For details of options passed to orcr.py, see "python3 ./ocr.py --help"
+Usage: ./pottan ocr <trained_model.pth> <iamge_path>
 EOF
   exit 0;
   fi
@@ -37,7 +37,7 @@ EOF
   mkdir -p ./tmp
   cp "$fullPath" "$workingCopy"
   python ./ocropy/ocropus-gpageseg "$workingCopy" -n
-  python3  ./ocr.py "$@"  "$linesDir"/*.png
+  python3  ./ocr.py --crnn "$crnnPath"  "$linesDir"/*.png
   rename s/bin.txt/txt/ "$linesDir"/*.txt
   python ./ocropy/ocropus-hocr "$workingCopy" -o ./tmp/out.html
   xdg-open ./tmp/out.html
