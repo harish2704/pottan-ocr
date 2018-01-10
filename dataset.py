@@ -20,18 +20,23 @@ fontList = readYaml('./fontlist.yaml')
 fontListFlat = []
 for fnt, styles in fontList:
     for style in styles:
-        fontListFlat.append([ fnt, style ])
+        fontDescStr = '%s %s 15' %( fnt, style )
+        fontListFlat.append([ fontDescStr, 'random' ])
+        fontListFlat.append([ fontDescStr, 'align-top' ])
+        fontListFlat.append([ fontDescStr, 'align-bottom' ])
+        fontListFlat.append([ fontDescStr, 'fit-height' ])
 
 totalVariations = len(fontListFlat)
 print( 'Total font variations = %d'% totalVariations )
 
 
 fontDescCache = {};
+twistChoices = [ i/4 for i in range(-4,4) ]
 
-def pangoRenderText( text, font, targetW, targetH, twist ):
-    """
-    twist - can be anything with in -1  to +1. +1 means maximum possible clockvise rotation, and -1 is maximum possible anticlockvise rotation
-    """
+def renderText( text, font, variation ):
+    targetW = 960
+    targetH = 32
+
     surface = cairo.ImageSurface(cairo.FORMAT_A8, targetW, targetH )
     context = cairo.Context(surface)
     pc = PangoCairo.create_context(context)
@@ -44,13 +49,23 @@ def pangoRenderText( text, font, targetW, targetH, twist ):
     layout.set_text( text, -1 );
 
     actualW, actualH = layout.get_pixel_size()
-    context.rotate( twist * targetH / actualW / 3 ) # found '3' is the best fit instead of '2' ( 2 from 2*pi )
-    if twist < 0:
+
+    if( variation == 'fit-height' ):
+        fontDesc = layout.get_font_description()
+        fontDesc.set_size( int(fontDesc.get_size() * 32/ actualH ) )
+        layout.set_font_description( fontDesc )
+    elif( variation == 'random' ):
+        twist = choice( twistChoices )
+        context.rotate( twist * targetH / actualW / 3 ) # found '3' is the best fit instead of '2' ( 2 from 2*pi )
+        if twist < 0:
+            context.translate(0, targetH - actualH )
+    elif( variation == 'align-bottom' ):
         context.translate(0, targetH - actualH )
 
     PangoCairo.show_layout(context, layout)
     data = surface.get_data()
-    return np.frombuffer(data, dtype=np.uint8).reshape(( targetH, targetW ))
+    data = np.frombuffer(data, dtype=np.uint8).reshape(( targetH, targetW ))
+    return np.invert( data )
 
 
 def getTrainingTexts( txtFile ):
@@ -59,11 +74,6 @@ def getTrainingTexts( txtFile ):
     return list(set( lines ))
 
 
-twistChoices = [ i/4 for i in range(-4,4) ]
-
-def renderText( word, font='AnjaliOldLipi', style='regular' ):
-    img = pangoRenderText( word, '%s %s 16' % ( font, style ), 960, 32, choice( twistChoices ) )
-    return np.invert( img )
 
 
 def normaizeImg( img ):
@@ -79,6 +89,7 @@ def alignCollate( batch ):
     return images, labels
 
 
+bgChoices = [ 0, 10, 30, 50 ]
 noiseChoices = [ i/20 for i in range(9) ]
 
 class TextDataset(Dataset):
@@ -94,11 +105,15 @@ class TextDataset(Dataset):
 
     def __getitem__(self, index):
         wordIdx = int( index / totalVariations )
-        font, style = fontListFlat[ index % totalVariations ]
+        font, variation = fontListFlat[ index % totalVariations ]
         label = self.words[ wordIdx ]
-        img = renderText( label, font=font, style=style )
-        gauss = randn( *img.shape )
-        img = cv2.add( img, img * gauss * choice(noiseChoices), dtype=cv2.CV_8UC3)
+        img = renderText( label, font, variation )
+
+        bg = np.full( img.shape, choice(bgChoices), dtype=np.uint8 )
+        noise = img * randn( *img.shape ) * choice( noiseChoices )
+
+        img = cv2.add( img, noise, dtype=cv2.CV_8UC3 )
+        img = cv2.subtract( img, bg, dtype=cv2.CV_8UC3 )
         # Convert into 1xWxH
         img = np.expand_dims( img, axis=0 )
         return ( img, label)
