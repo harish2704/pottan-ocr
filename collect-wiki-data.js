@@ -79,7 +79,7 @@ zwjRegex = RegExp( zwjRegex, 'g');
 var preProcessPatterns = '('+ preProcessPatterns.join('|')+')';
 preProcessPatterns = new RegExp( preProcessPatterns, 'g');
 
-var matchingPattern = new RegExp('[\u0d00-\u0d7f\u200C\u200D][\u0d00-\u0d7f\u200C\u200D'+ symbolsTobeIncluded +']{2,}', 'g' );
+var matchingPattern = new RegExp('[0-9\u0d00-\u0d7f\u200C\u200D][0-9\u0d00-\u0d7f\u200C\u200D'+ symbolsTobeIncluded +']{2,}', 'g' );
 var whiteSpace = new RegExp('\\s+', 'g' );
 
 var parser = new Transform();
