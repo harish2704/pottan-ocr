@@ -90,7 +90,7 @@ def alignCollate( batch ):
 
 
 bgChoices = [ 0, 10, 30, 50 ]
-noiseChoices = [ i/20 for i in range(9) ]
+noiseChoices = [ i/20 for i in range(6) ]
 
 class TextDataset(Dataset):
 
