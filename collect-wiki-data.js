@@ -5,6 +5,7 @@
  */
 
 var fs = require('fs');
+var crypto = require('crypto');
 var Transform = require('stream').Transform;
 var infile = process.argv[2];
 
@@ -112,6 +113,10 @@ parser._transform = function(data, encoding, done) {
 
     
     if( ( sentance.length + word.length ) > 55 ){
+      if( sentance.length < 45 ){
+        // Intentionally inject some numbers into text. Generally, numbers will be less in corpus
+        sentance += ' ' + crypto.randomBytes(2).readUInt16LE()
+      }
       this.push( sentance + '\n' );
 
       // if this is a single long word. Ignore it

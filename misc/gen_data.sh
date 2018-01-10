@@ -3,8 +3,9 @@
 
 
 
-startLine=5000
-nLines=$(( 256 * 500 ))
+startLine=${OFFSET:-1000}
+nLines=${COUNT:-25600}
+
 tmpFile="./tmp/data.txt"
 
 mypython(){
