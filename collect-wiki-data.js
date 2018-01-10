@@ -128,4 +128,7 @@ parser._transform = function(data, encoding, done) {
 reader = fs.createReadStream( infile )
   .pipe( parser )
   .pipe( process.stdout )
+reader.on('error', function(e){
+  console.error( e );
+});
 
