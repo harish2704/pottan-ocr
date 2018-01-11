@@ -10,28 +10,26 @@ from numpy.random import randn
 import cv2
 import cairo
 import gi
+import math
 gi.require_version('Pango', '1.0')
 gi.require_version('PangoCairo', '1.0')
 from gi.repository import Pango, PangoCairo
 
 
+variationChoices = [ 'random', 'align-top', 'align-bottom', 'fit-height' ]
 
 fontList = readYaml('./fontlist.yaml')
 fontListFlat = []
 for fnt, styles in fontList:
     for style in styles:
-        fontDescStr = '%s %s 15' %( fnt, style )
-        fontListFlat.append([ fontDescStr, 'random' ])
-        fontListFlat.append([ fontDescStr, 'align-top' ])
-        fontListFlat.append([ fontDescStr, 'align-bottom' ])
-        fontListFlat.append([ fontDescStr, 'fit-height' ])
+        fontListFlat.append([ fontDescStr,  choice( variationChoices )])
 
 totalVariations = len(fontListFlat)
 print( 'Total font variations = %d'% totalVariations )
 
 
 fontDescCache = {};
-twistChoices = [ i/4 for i in range(-4,4) ]
+twistChoices = [ -1, -0.75, 0.75, 1 ]
 
 def renderText( text, font, variation ):
     targetW = 960
@@ -56,7 +54,7 @@ def renderText( text, font, variation ):
         layout.set_font_description( fontDesc )
     elif( variation == 'random' ):
         twist = choice( twistChoices )
-        context.rotate( twist * targetH / actualW / 3 ) # found '3' is the best fit instead of '2' ( 2 from 2*pi )
+        context.rotate( twist * math.atan( ( targetH - actualH  )/ actualW  ) )
         if twist < 0:
             context.translate(0, targetH - actualH )
     elif( variation == 'align-bottom' ):
@@ -89,7 +87,7 @@ def alignCollate( batch ):
     return images, labels
 
 
-bgChoices = [ 0, 10, 30, 50 ]
+#  bgChoices = [ 0, 10, 30, 50 ]
 noiseChoices = [ i/20 for i in range(6) ]
 
 class TextDataset(Dataset):
@@ -100,6 +98,9 @@ class TextDataset(Dataset):
         self.variationCount = totalVariations
         self.itemCount = len( self.words )*totalVariations
 
+    def getFont( self, index ):
+        return fontListFlat[ index % totalVariations ]
+
     def __len__(self):
         return self.itemCount
 
@@ -109,11 +110,11 @@ class TextDataset(Dataset):
         label = self.words[ wordIdx ]
         img = renderText( label, font, variation )
 
-        bg = np.full( img.shape, choice(bgChoices), dtype=np.uint8 )
+        #  bg = np.full( img.shape, choice(bgChoices), dtype=np.uint8 )
         noise = img * randn( *img.shape ) * choice( noiseChoices )
 
         img = cv2.add( img, noise, dtype=cv2.CV_8UC3 )
-        img = cv2.subtract( img, bg, dtype=cv2.CV_8UC3 )
+        #  img = cv2.subtract( img, bg, dtype=cv2.CV_8UC3 )
         # Convert into 1xWxH
         img = np.expand_dims( img, axis=0 )
         return ( img, label)
