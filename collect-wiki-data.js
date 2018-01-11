@@ -80,7 +80,7 @@ zwjRegex = RegExp( zwjRegex, 'g');
 var preProcessPatterns = '('+ preProcessPatterns.join('|')+')';
 preProcessPatterns = new RegExp( preProcessPatterns, 'g');
 
-var matchingPattern = new RegExp('[0-9\u0d00-\u0d7f\u200C\u200D][0-9\u0d00-\u0d7f\u200C\u200D'+ symbolsTobeIncluded +']{2,}', 'g' );
+var matchingPattern = new RegExp('[0-9\u0d00-\u0d7f\u200C\u200D][0-9\u0d00-\u0d7f\u200C\u200D'+ symbolsTobeIncluded +']{1,}', 'g' );
 var whiteSpace = new RegExp('\\s+', 'g' );
 
 var parser = new Transform();
@@ -112,11 +112,11 @@ parser._transform = function(data, encoding, done) {
     // if( word === ''){ debugger; }
 
     
-    if( ( sentance.length + word.length ) > 55 ){
+    if( ( sentance.length + word.length ) > 80 ){
       this.push( sentance + '\n' );
 
       // if this is a single long word. Ignore it
-      sentance = word.length > 55 ?  '' : word ;
+      sentance = word.length > 80 ?  '' : word ;
     } else if(word){
       sentance = sentance + ' ' + word
     }

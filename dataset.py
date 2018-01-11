@@ -16,13 +16,18 @@ gi.require_version('PangoCairo', '1.0')
 from gi.repository import Pango, PangoCairo
 
 
-variationChoices = [ 'random', 'align-top', 'align-bottom', 'fit-height' ]
+variationChoices = [
+        'random',
+        'align-top',
+        'align-bottom',
+        'fit-height'
+        ]
 
 fontList = readYaml('./fontlist.yaml')
 fontListFlat = []
 for fnt, styles in fontList:
     for style in styles:
-        fontDescStr = '%s %s 15' %( fnt, style )
+        fontDescStr = '%s %s 18' %( fnt, style )
         fontListFlat.append([ fontDescStr,  choice( variationChoices )])
 
 totalVariations = len(fontListFlat)
@@ -33,7 +38,7 @@ fontDescCache = {};
 twistChoices = [ -1, -0.75, 0.75, 1 ]
 
 def renderText( text, font, variation ):
-    targetW = 960
+    targetW = 1024
     targetH = 32
 
     surface = cairo.ImageSurface(cairo.FORMAT_A8, targetW, targetH )
@@ -51,9 +56,17 @@ def renderText( text, font, variation ):
 
     if( variation == 'fit-height' ):
         fontDesc = layout.get_font_description()
-        fontDesc.set_size( int(fontDesc.get_size() * 32/ actualH ) )
+        fontDesc.set_size( int(fontDesc.get_size() * targetH/ actualH ) )
         layout.set_font_description( fontDesc )
-    elif( variation == 'random' ):
+
+    actualW, actualH = layout.get_pixel_size()
+    if( actualW > targetW ):
+        fontDesc = layout.get_font_description()
+        fontDesc.set_size( int(fontDesc.get_size() * 0.9 * targetW/ actualW  ) )
+        layout.set_font_description( fontDesc )
+    actualW, actualH = layout.get_pixel_size()
+
+    if( variation == 'random' ):
         twist = choice( twistChoices )
         context.rotate( twist * math.atan( ( targetH - actualH  )/ actualW  ) )
         if twist < 0:
