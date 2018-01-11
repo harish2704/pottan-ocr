@@ -19,7 +19,7 @@ mypython(){
 }
 
 main_fn(){
-  node collect-wiki-data.js "$infile" | sed -n "$startLine,$(( startLine + nLines + 1000 ))p"  | pv > "$tmpFile"
+  node collect-wiki-data.js "$infile" | sed -n "$startLine,$(( startLine + nLines + 5000 ))p"  | pv > "$tmpFile"
   $mypython ./data_gen.py \
     --input "$tmpFile" \
     --output ./tmp  \
