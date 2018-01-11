@@ -52,19 +52,23 @@ def renderText( text, font, variation ):
     layout.set_font_description(Pango.FontDescription( font ))
     layout.set_text( text, -1 );
 
-    actualW, actualH = layout.get_pixel_size()
+    inkRect, _ = layout.get_pixel_extents()
+    actualW = inkRect.width; actualH = inkRect.height
+    #  import ipdb; ipdb.set_trace()
 
     if( variation == 'fit-height' ):
         fontDesc = layout.get_font_description()
         fontDesc.set_size( int(fontDesc.get_size() * targetH/ actualH ) )
         layout.set_font_description( fontDesc )
+        inkRect, _ = layout.get_pixel_extents()
+        actualW = inkRect.width; actualH = inkRect.height
 
-    actualW, actualH = layout.get_pixel_size()
     if( actualW > targetW ):
         fontDesc = layout.get_font_description()
         fontDesc.set_size( int(fontDesc.get_size() * 0.9 * targetW/ actualW  ) )
         layout.set_font_description( fontDesc )
-    actualW, actualH = layout.get_pixel_size()
+        inkRect, _ = layout.get_pixel_extents()
+        actualW = inkRect.width; actualH = inkRect.height
 
     if( variation == 'random' ):
         twist = choice( twistChoices )
@@ -104,7 +108,7 @@ def alignCollate( batch ):
 
 
 #  bgChoices = [ 0, 10, 30, 50 ]
-noiseChoices = [ 0, 0, 5, 10, 0, 10, 7, ]
+noiseChoices = [ 0, 0, 5, 3, 0, 4, 6, ]
 
 class TextDataset(Dataset):
 
@@ -125,7 +129,6 @@ class TextDataset(Dataset):
         font, variation = fontListFlat[ index % totalVariations ]
         label = self.words[ wordIdx ]
         img = renderText( label, font, variation )
-        #  import ipdb; ipdb.set_trace()
         img = img - cv2.randn( np.zeros( img.shape, dtype=np.uint8 ), 0, choice( noiseChoices ) )
         img = np.expand_dims( img, axis=0 )
         return ( img, label)
