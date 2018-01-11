@@ -35,7 +35,7 @@ print( 'Total font variations = %d'% totalVariations )
 
 
 fontDescCache = {};
-twistChoices = [ -1, -0.75, 0.75, 1 ]
+twistChoices = [ -1, -0.85, -0.75, 0.75, 0.85, 1 ]
 
 def renderText( text, font, variation ):
     targetW = 1024
@@ -78,6 +78,8 @@ def renderText( text, font, variation ):
     data = surface.get_data()
     data = np.frombuffer(data, dtype=np.uint8).reshape(( targetH, targetW ))
     return np.invert( data )
+
+
 
 
 def getTrainingTexts( txtFile ):
@@ -123,12 +125,6 @@ class TextDataset(Dataset):
         font, variation = fontListFlat[ index % totalVariations ]
         label = self.words[ wordIdx ]
         img = renderText( label, font, variation )
-
-        #  bg = np.full( img.shape, choice(bgChoices), dtype=np.uint8 )
-        noise = img * randn( *img.shape ) * choice( noiseChoices )
-
-        img = cv2.add( img, noise, dtype=cv2.CV_8UC3 )
-        #  img = cv2.subtract( img, bg, dtype=cv2.CV_8UC3 )
-        # Convert into 1xWxH
+        #  import ipdb; ipdb.set_trace()
         img = np.expand_dims( img, axis=0 )
         return ( img, label)
