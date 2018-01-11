@@ -22,6 +22,7 @@ fontList = readYaml('./fontlist.yaml')
 fontListFlat = []
 for fnt, styles in fontList:
     for style in styles:
+        fontDescStr = '%s %s 15' %( fnt, style )
         fontListFlat.append([ fontDescStr,  choice( variationChoices )])
 
 totalVariations = len(fontListFlat)
