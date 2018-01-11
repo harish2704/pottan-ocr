@@ -84,7 +84,7 @@ def renderText( text, font, variation ):
 
 def getTrainingTexts( txtFile ):
     lines = readFile( txtFile )
-    lines = filter( None, re.split('\n', lines ) )
+    lines = filter( None, re.split('[\r\n]', lines ) )
     return list(set( lines ))
 
 
@@ -104,7 +104,7 @@ def alignCollate( batch ):
 
 
 #  bgChoices = [ 0, 10, 30, 50 ]
-noiseChoices = [ i/20 for i in range(6) ]
+noiseChoices = [ 0, 0, 5, 10, 0,15, 20, ]
 
 class TextDataset(Dataset):
 
@@ -126,5 +126,6 @@ class TextDataset(Dataset):
         label = self.words[ wordIdx ]
         img = renderText( label, font, variation )
         #  import ipdb; ipdb.set_trace()
+        img = img - cv2.randn( np.zeros( img.shape, dtype=np.uint8 ), 0, choice( noiseChoices ) )
         img = np.expand_dims( img, axis=0 )
         return ( img, label)
