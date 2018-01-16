@@ -16,19 +16,15 @@ gi.require_version('PangoCairo', '1.0')
 from gi.repository import Pango, PangoCairo
 
 
-variationChoices = [
-        'random',
-        'align-top',
-        'align-bottom',
-        'fit-height'
-        ]
-
 fontList = readYaml('./fontlist.yaml')
 fontListFlat = []
 for fnt, styles in fontList:
     for style in styles:
         fontDescStr = '%s %s 18' %( fnt, style )
-        fontListFlat.append([ fontDescStr,  choice( variationChoices )])
+        fontListFlat.append([ fontDescStr,  'random',       ])
+        #  fontListFlat.append([ fontDescStr,  'align-top',    ]) // Fit-height also will cause align-top kind. So removing this from list
+        fontListFlat.append([ fontDescStr,  'align-bottom'  ])
+        fontListFlat.append([ fontDescStr,  'fit-height'    ])
 
 totalVariations = len(fontListFlat)
 print( 'Total font variations = %d'% totalVariations )
