@@ -106,6 +106,6 @@ var misc = [
 ];
 
 allItems = misc.concat( allItems );
-allItems = allItems.filter( v => v.length ===1 );
+allItems = allItems.filter( v => v.length ===1 ).concat( ['\u200c', '\u200d' ]);
 fs.writeFileSync( './data/glyphs.json', JSON.stringify( allItems, null, 1 ) );
 
