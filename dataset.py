@@ -35,7 +35,7 @@ print( 'Total font variations = %d'% totalVariations )
 
 
 fontDescCache = {};
-twistChoices = [ -1, -0.85, -0.75, 0.75, 0.85, 1 ]
+twistChoices = [ -1, -0.95, -0.85, 0.85, 0.95, 1 ]
 
 def renderText( text, font, variation ):
     targetW = 1024
@@ -107,8 +107,13 @@ def alignCollate( batch ):
     return images, labels
 
 
-#  bgChoices = [ 0, 10, 30, 50 ]
-noiseChoices = [ 0, 0, 5, 3, 0, 4, 6, ]
+noiseSDChoices = [
+        (0,0),
+        (10, 70),
+        (12, 80),
+        (15, 90),
+        (20, 100)
+        ]
 
 class TextDataset(Dataset):
 
@@ -129,6 +134,7 @@ class TextDataset(Dataset):
         font, variation = fontListFlat[ index % totalVariations ]
         label = self.words[ wordIdx ]
         img = renderText( label, font, variation )
-        img = img - cv2.randn( np.zeros( img.shape, dtype=np.uint8 ), 0, choice( noiseChoices ) )
+        #  from hari import imshowgr; import ipdb; ipdb.set_trace()
+        img = np.clip( img - cv2.randn( np.zeros( img.shape, dtype=np.float ), *choice(noiseSDChoices) ), 0, 255 ).astype(np.uint8)
         img = np.expand_dims( img, axis=0 )
         return ( img, label)
