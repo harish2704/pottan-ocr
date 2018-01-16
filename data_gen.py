@@ -7,10 +7,13 @@ import numpy as np
 import os
 from PIL import Image
 from dataset import TextDataset, getTrainingTexts
+import multiprocessing
+import random
 
 
 
-
+def getDataset( dataset, i):
+    return dataset.__getitem__(i)
 
 
 class DataGen:
@@ -45,15 +48,23 @@ class DataGen:
 
     def createDataset( self, opts ):
         dataset = TextDataset( self.WORD_LIST_FILE )
-        print( 'Dataset length=%d'%len(dataset))
+        idxs = random.sample(range(0, len(dataset)), opts.count)
+        pool = multiprocessing.Pool( multiprocessing.cpu_count() )
+        results = [ pool.apply_async( getDataset, ( dataset, idx ) ) for idx in idxs ]
+        #  results = [ dataset[idx] for idx in range( len( dataset ) ) ]
+        print( 'Total no of dataset %d' % len( dataset ))
         if( opts.format == 'numpy' ):
-            np.savez_compressed( self.DATA_FILE, list( dataset ))
+            out = [ result.get() for result in results ]
+            np.savez( self.DATA_FILE, out )
         else:
             os.system('mkdir -p %s' % self.DATA_FILE )
-            for idx in range(len(dataset)):
-                img, label = dataset[idx]
+            lines = []
+            for idx, result in enumerate(results):
+                img, label = result.get()
+                lines.append( label )
                 img = Image.fromarray( img[0] )
-                img.save( '%s/line_%s__%s__%s.png' %( self.DATA_FILE, dataset.words.index( label ), *dataset.getFont( idx ) ) )
+                img.save( '%s/line_%06d.pgm' %( self.DATA_FILE, idx) )
+            writeFile('%s/all_lines.lst' % self.DATA_FILE, '\n'.join( lines ) )
 
 
 
@@ -83,6 +94,7 @@ if( __name__ == '__main__' ):
     parser.add_argument('--skip-creation', action='store_true', help='Skip dataset creation')
     parser.add_argument('--input', help='input text file contains words')
     parser.add_argument('--output', help='output numpy data file')
+    parser.add_argument('--count', type=int, default=512, help='size of the dataset')
     parser.add_argument('--format', choices=[ 'numpy', 'images' ], default='numpy', help='Format of output. Numpy array vs Directory of images' )
     parser.add_argument('--name', help='name of dataset. ( Ie, input=./data/<name>.txt , output=./data/<name>_data.npz )')
     opt = parser.parse_args()
