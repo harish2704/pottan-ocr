@@ -73,10 +73,10 @@ var misc = [
 ' ',
   '!',
   '"',
-  '#',
-  '$',
+  // '#',
+  // '$',
   '%',
-  '&',
+  // '&',
   "'",
   '(',
   ')',
@@ -88,22 +88,24 @@ var misc = [
   '/',
   ':',
   ';',
-  '<',
+  // '<',
   '=',
-  '>',
+  // '>',
   '?',
-  '@',
+  // '@',
   '[',
-  '\\',
+  // '\\',
   ']',
   '^',
   '_',
   '`',
   '{',
-  '|',
+  // '|',
   '}',
   '~',
 ];
 
-fs.writeFileSync( './data/glyphs.json', JSON.stringify( misc.concat(allItems), null, 1 ) );
+allItems = misc.concat( allItems );
+allItems = allItems.filter( v => v.length ===1 );
+fs.writeFileSync( './data/glyphs.json', JSON.stringify( allItems, null, 1 ) );
 

@@ -13,10 +13,10 @@ var symbolsTobeIncluded = [
 ' ',
   '!',
   '"',
-  '#',
-  '$',
+  // '#',
+  // '$',
   '%',
-  '&',
+  // '&',
   "'",
   '(',
   ')',
@@ -28,19 +28,19 @@ var symbolsTobeIncluded = [
   '/',
   ':',
   ';',
-  '<',
+  // '<',
   '=',
-  '>',
+  // '>',
   '?',
-  '@',
+  // '@',
   '[',
-  '\\',
+  // '\\',
   ']',
   '^',
   '_',
   '`',
   '{',
-  '|',
+  // '|',
   '}',
   '~',
 ].join('');
@@ -60,13 +60,13 @@ var preProcessPatterns = [
 '&[^\s]*;',
 '\\\>',
 '[\\[\\]\\(\\)\\{\\}\'"\\-=\\.\\*_]{2,}',
-  '[ൟ]'
+'[ൟ\u0d45\u0d01]'
 ];
 
 
 // Replace all non zwj/zwnj
 // Ref http://thottingal.in/blog/2017/05/27/a-formal-grammar-for-malayalam-syllables/
-var unwantedZwj = new RegExp( '\([^്]|^\)[‌‍]+' , 'g' );
+var unwantedZwj = new RegExp( '\([^്]\)[‌‍]+' , 'g' );
 
 var zwjMapping = {
   'ല്‍': 'ൽ',
@@ -87,7 +87,7 @@ var whiteSpace = new RegExp('\\s+', 'g' );
 var parser = new Transform();
 parser.lastReadedLine = '';
 parser._transform = function(data, encoding, done) {
-  data = data.toString();
+  data = this.lastReadedLine + data.toString();
   data = data.replace( preProcessPatterns, '')
   data = data.replace( unwantedZwj, '$1');
   data = data.replace( zwjRegex, function( a ){
@@ -103,7 +103,7 @@ parser._transform = function(data, encoding, done) {
   match = [].concat.apply( [], match.map(v=> v.split( whiteSpace ) ) );
 
   var i=0,
-    sentance=this.lastReadedLine,
+    sentance='',
     word,
     total = match.length;
 
