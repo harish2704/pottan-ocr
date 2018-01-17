@@ -119,6 +119,9 @@ class TextDataset(Dataset):
         self.variationCount = totalVariations
         self.itemCount = len( self.words )*totalVariations
 
+    def getLabel( self, index ):
+        return self.words[ int( index / totalVariations ) ]
+
     def getFont( self, index ):
         return fontListFlat[ index % totalVariations ]
 
@@ -126,11 +129,9 @@ class TextDataset(Dataset):
         return self.itemCount
 
     def __getitem__(self, index):
-        wordIdx = int( index / totalVariations )
-        font, variation = fontListFlat[ index % totalVariations ]
-        label = self.words[ wordIdx ]
+        font, variation = self.getFont( index )
+        label = self.getLabel( index )
         img = renderText( label, font, variation )
-        #  from hari import imshowgr; import ipdb; ipdb.set_trace()
         img = np.clip( img - cv2.randn( np.zeros( img.shape, dtype=np.float ), *choice(noiseSDChoices) ), 0, 255 ).astype(np.uint8)
         img = np.expand_dims( img, axis=0 )
         return ( img, label)
