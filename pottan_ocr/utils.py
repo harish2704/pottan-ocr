@@ -4,6 +4,7 @@ import numpy as np
 from torch.autograd import Variable
 import gzip
 import yaml
+from re import split
 
 FINAL_W=32
 FINAL_H=32
@@ -13,6 +14,9 @@ def readFile( fname ):
     opener, mode = ( gzip.open, 'rt' ) if fname[-3:] == '.gz' else ( open, 'r' )
     with opener( fname, mode ) as f:
         return f.read()
+
+def readLines( fname ):
+    return split('[\r\n]', readFile( fname ) )
 
 def readJson( fname ):
     with open( fname, 'r' ) as f:

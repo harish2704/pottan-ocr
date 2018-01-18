@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from .utils import config, readFile
+from .utils import config, readLines
 
 import torch
 from torch.utils.data import Dataset
@@ -107,8 +107,8 @@ def renderText( text, font, variation ):
 
 
 def getTrainingTexts( txtFile ):
-    lines = readFile( txtFile )
-    lines = filter( None, split('[\r\n]', lines ) )
+    lines = readLines( txtFile )
+    lines = filter( None, lines )
     return list(set( lines ))
 
 
@@ -141,6 +141,7 @@ class TextDataset( Sequence ):
         self.txtFile = txtFile
         self.lines = getTrainingTexts( txtFile )
         self.bs = batch_size
+        self.cache = cache
         maxItemCount = len( self.lines )*totalVariations
         self.itemCount =  maxItemCount if limit == None else limit
         self.batchCount = int( self.itemCount/batch_size )
@@ -164,6 +165,14 @@ class TextDataset( Sequence ):
     def __getitem__( self, batchIndex ):
         if( batchIndex >= self.batchCount ):
             raise StopIteration
-        startIndex = batchIndex*self.bs
-        out = [ self.getSingleItem( i ) for i in self.randomIds[ startIndex: startIndex+self.bs ] ]
+
+        cacheImage = '%s/batch_%03d_%06d.pgm' %( self.cache, self.bs, index)
+        cacheLabels = '%s/batch_%03d_%06d.txt' %( self.cache, self.bs, index)
+        if( self.cache and os.path.exists( cacheImage ) ):
+            images = Image.open( cacheImage )
+            labels = readLines( cacheLabels )
+            out = zip( images, labels )
+        else:
+            startIndex = batchIndex*self.bs
+            out = [ self.getSingleItem( i ) for i in self.randomIds[ startIndex: startIndex+self.bs ] ]
         return alignCollate( out )
