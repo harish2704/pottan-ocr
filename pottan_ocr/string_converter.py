@@ -1,9 +1,9 @@
 
 import re
-from utils import readJson
 from torch import IntTensor
+from .utils import config
 
-glyphList = readJson('./data/glyphs.json')
+glyphList = config['glyphs']
 glyphList.sort( key=lambda x: len(x), reverse=True);
 
 #  escape chars like ", ; ) ( ] [ ? *" for regex

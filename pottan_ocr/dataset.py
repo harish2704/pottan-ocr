@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 
-from utils import readYaml, readFile
+from .utils import config, readFile
 
 import torch
 from torch.utils.data import Dataset
 
 import math
 from enum import Enum
-from random import choice
+from collections import Sequence
+from random import choice, sample
 from re import split
 import numpy as np
 from numpy.random import randn
@@ -21,7 +22,7 @@ from gi.repository import Pango, PangoCairo
 
 VARIATIONS = Enum('AlignmentVariation', 'random alighn_bottom fit_height' )
 
-fontList = readYaml('./config.yaml')['fonts']
+fontList = config['fonts']
 fontListFlat = []
 for fnt, styles in fontList:
     for style in styles:
@@ -134,7 +135,7 @@ noiseSDChoices = [
         (20, 100)
         ]
 
-class TextDataset:
+class TextDataset( Sequence ):
 
     def __init__( self, txtFile, limit=None, num_workers=2, cache=None, batch_size=32 ):
         self.txtFile = txtFile
@@ -142,7 +143,7 @@ class TextDataset:
         self.bs = batch_size
         maxItemCount = len( self.lines )*totalVariations
         self.itemCount =  maxItemCount if limit == None else limit
-
+        self.batchCount = int( self.itemCount/batch_size )
         self.randomIds = sample( range( maxItemCount ), self.itemCount )
 
     def getLabel( self, index ):
@@ -152,14 +153,17 @@ class TextDataset:
         return fontListFlat[ index % totalVariations ]
 
     def __len__(self):
-        return self.itemCount
+        return self.batchCount
 
     def getSingleItem( self, index ):
         font, variation = self.getFont( index )
         label = self.getLabel( index )
         img = renderText( label, font, variation )
         return ( img, label)
+
     def __getitem__( self, batchIndex ):
+        if( batchIndex >= self.batchCount ):
+            raise StopIteration
         startIndex = batchIndex*self.bs
         out = [ self.getSingleItem( i ) for i in self.randomIds[ startIndex: startIndex+self.bs ] ]
         return alignCollate( out )

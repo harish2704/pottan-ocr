@@ -1,25 +1,29 @@
-from __future__ import print_function
+#!/usr/bin/env python3
+
+
+import os
 import argparse
 import random
+from datetime import datetime
 import torch
 import torch.optim as optim
-import torch.utils.data
 from torch.autograd import Variable
 import numpy as np
 from warpctc_pytorch import CTCLoss
-import os
-import utils
-import string_converter as converter
-from datetime import datetime
 
-import models.crnn as crnn
-from dataset import TextDataset
+from pottan_ocr import utils
+from pottan_ocr import string_converter as converter
+from pottan_ocr import model as crnn
+from pottan_ocr.dataset import TextDataset
+
+IMAGE_H = 32
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--traindata', required=True, help='path to dataset')
 parser.add_argument('--valdata', required=True, help='path to dataset')
+parser.add_argument('--traindata_limit', type=int, default=51200, help='Limit the training dataset size')
+parser.add_argument('--valdata_limit', type=int, default=4096, help='Limit the validation dataset size')
 parser.add_argument('--batchSize', type=int, default=64, help='input batch size')
-parser.add_argument('--imgH', type=int, default=32, help='the height of the input image to network')
 parser.add_argument('--nh', type=int, default=256, help='size of the lstm hidden state')
 parser.add_argument('--niter', type=int, default=25, help='number of epochs to train for')
 parser.add_argument('--lr', type=float, default=0.01, help='learning rate for Critic, default=0.00005')
@@ -34,8 +38,6 @@ parser.add_argument('--valInterval', type=int, default=500, help='Interval to be
 parser.add_argument('--saveInterval', type=int, default=500, help='Interval to be displayed')
 parser.add_argument('--adam', action='store_true', help='Whether to use adam (default is rmsprop)')
 parser.add_argument('--adadelta', action='store_true', help='Whether to use adadelta (default is rmsprop)')
-parser.add_argument('--keep_ratio', action='store_true', help='whether to keep ratio for image resize')
-parser.add_argument('--random_sample', action='store_true', help='whether to sample the dataset with random sampler')
 opt = parser.parse_args()
 print(opt)
 
@@ -55,8 +57,8 @@ if torch.cuda.is_available() and not opt.cuda:
 
 
 
-train_loader = TextDataset( opt.traindata )
-test_loader = TextDataset( opt.valdata )
+train_loader = TextDataset( opt.traindata, batch_size=opt.batchSize, limit=opt.traindata_limit )
+test_loader = TextDataset( opt.valdata, batch_size=opt.batchSize, limit=opt.valdata_limit )
 
 nclass = converter.totalGlyphs
 print('Number of char class = %d' % nclass )
@@ -76,13 +78,13 @@ def weights_init(m):
 
 
 #  1 --> Number of channels
-crnn = crnn.CRNN(opt.imgH, 1, nclass, opt.nh)
+crnn = crnn.CRNN(IMAGE_H, 1, nclass, opt.nh)
 crnn.apply(weights_init)
 if opt.crnn != '':
     utils.loadTrainedModel( crnn, opt )
 #  print(crnn)
 
-image = torch.FloatTensor(opt.batchSize, 3, opt.imgH, opt.imgH)
+image = torch.FloatTensor(opt.batchSize, 3, IMAGE_H, IMAGE_H)
 text = torch.IntTensor(opt.batchSize * 5)
 length = torch.IntTensor(opt.batchSize)
 
@@ -120,16 +122,11 @@ def val(net, criterion, max_iter=10):
         p.requires_grad = False
 
     net.eval()
-    val_iter = iter( test_loader )
 
-    i = 0
     n_correct = 0
     loss_avg = utils.averager()
 
-    max_iter = min(max_iter, len( test_loader ))
-    for i in range(max_iter):
-        data = val_iter.next()
-        i += 1
+    for i, data in enumerate( test_loader ):
         cpu_images, cpu_texts = data
 
         batch_size = cpu_images.size(0)
@@ -146,7 +143,6 @@ def val(net, criterion, max_iter=10):
         cost = criterion(preds, text, preds_size, length) / batch_size
         loss_avg.add(cost)
 
-        #  import ipdb; ipdb.set_trace()
         _, preds = preds.max(2)
         #  preds = preds.squeeze(2)
         preds = preds.transpose(1, 0).contiguous().view(-1)
@@ -159,7 +155,7 @@ def val(net, criterion, max_iter=10):
     for raw_pred, pred, gt in zip(raw_preds, sim_preds, cpu_texts):
         print('%-20s => %-20s, gt: %-20s' % (raw_pred, pred, gt))
 
-    accuracy = n_correct / float(max_iter * opt.batchSize)
+    accuracy = n_correct / float( len( test_loader ) * opt.batchSize)
     print('Test loss: %f, accuray: %f' % (loss_avg.val(), accuracy))
 
 

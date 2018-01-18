@@ -31,6 +31,7 @@ def readYaml( fname ):
         return yaml.load( fp )
 
 
+config = readYaml('./config.yaml')
 
 
 class averager(object):
