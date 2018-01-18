@@ -37,7 +37,7 @@ EOF
   mkdir -p ./tmp
   cp "$fullPath" "$workingCopy"
   python ./ocropy/ocropus-gpageseg "$workingCopy" -n
-  python3  ./ocr.py --crnn "$crnnPath"  "$linesDir"/*.png
+  python3  ./bin/ocr.py --crnn "$crnnPath"  "$linesDir"/*.png
   rename s/bin.txt/txt/ "$linesDir"/*.txt
   python ./ocropy/ocropus-hocr "$workingCopy" -o ./tmp/out.html
   xdg-open ./tmp/out.html

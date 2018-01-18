@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
 
+import multiprocessing
+import sys
+import argparse
 from PIL import Image
 
 from os.path import splitext
 import torch
 from torch.autograd import Variable
 import numpy as np
-import utils
-from dataset import normaizeImg
-import argparse
-import models.crnn as crnn
-import string_converter as converter
-import multiprocessing
-import sys
+
+from pottan_ocr import string_converter as converter
+from pottan_ocr import utils
+from pottan_ocr import model as crnn
+from pottan_ocr.dataset import normaizeImg
 
 def loadImg( fname ):
     img = Image.open( fname ).convert('L')
@@ -41,9 +42,11 @@ def main( opt ):
     totalImages = len( opt.image_paths )
     pool = multiprocessing.Pool( multiprocessing.cpu_count() )
     results = [ pool.apply_async( evalModel, ( model, img_path, idx, totalImages ) ) for idx, img_path in enumerate( opt.image_paths ) ]
+    #  results = [ evalModel( model, img_path, idx, totalImages ) for idx, img_path in enumerate( opt.image_paths ) ]
     for idx, result in enumerate( results ):
         img_path = opt.image_paths[ idx ]
         text = result.get()[0]
+        #  text = result[0]
         if( opt.stdout ):
             print('%s:::%s' %( img_path, [ text ] ))
         else:
