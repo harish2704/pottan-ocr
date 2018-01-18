@@ -21,8 +21,7 @@ def loadImg( fname ):
     targetH = 32
     targetW = int( origW * targetH/origH )
     img = img.resize( (targetW, targetH ), Image.BILINEAR )
-    img = np.expand_dims( img, axis=0 )
-    return normaizeImg( img )
+    return normaizeImg( np.array( img ) )
 
 def evalModel( model, img_path, current, total ):
     print( 'Progress %d/%d' %( current, total ), file=sys.stderr )
