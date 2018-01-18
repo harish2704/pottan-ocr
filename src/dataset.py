@@ -1,39 +1,59 @@
+#!/usr/bin/env python3
+
+from utils import readYaml, readFile
 
 import torch
 from torch.utils.data import Dataset
-from utils import readYaml, readFile
 
+import math
+from enum import Enum
 from random import choice
-import re
+from re import split
 import numpy as np
 from numpy.random import randn
 import cv2
 import cairo
 import gi
-import math
 gi.require_version('Pango', '1.0')
 gi.require_version('PangoCairo', '1.0')
 from gi.repository import Pango, PangoCairo
 
 
-fontList = readYaml('./fontlist.yaml')
+VARIATIONS = Enum('AlignmentVariation', 'random alighn_bottom fit_height' )
+
+fontList = readYaml('./config.yaml')['fonts']
 fontListFlat = []
 for fnt, styles in fontList:
     for style in styles:
         fontDescStr = '%s %s 18' %( fnt, style )
-        fontListFlat.append([ fontDescStr,  'random',       ])
-        #  fontListFlat.append([ fontDescStr,  'align-top',    ]) // Fit-height also will cause align-top kind. So removing this from list
-        fontListFlat.append([ fontDescStr,  'align-bottom'  ])
-        fontListFlat.append([ fontDescStr,  'fit-height'    ])
+        fontListFlat.append([ fontDescStr, VARIATIONS.random,       ])
+        fontListFlat.append([ fontDescStr,  VARIATIONS.alighn_bottom ])
+        fontListFlat.append([ fontDescStr,  VARIATIONS.fit_height ])
 
 totalVariations = len(fontListFlat)
 print( 'Total font variations = %d'% totalVariations )
 
 
+#  Pango FontDescription cache
 fontDescCache = {};
-twistChoices = [ -1, -0.95, -0.85, 0.85, 0.95, 1 ]
 
+
+#  List of available angles of rotation.
+#  -1 --> Maximum possible negative rotation with in available free space
+#  +1 --> Maximum possible positive rotation with in available free space
+TWIST_CHOICES = [ -1, -0.95, -0.85, 0.85, 0.95, 1 ]
+
+
+
+##
+#
+# @param text - The text to be rendered
+# @param font - A string representing Pango font description. Eg: 'FreeSans bold 18'
+# @param variation - representing alighnment variation .
+#
+# @return numpy.array
 def renderText( text, font, variation ):
+    """Render a unicode text into 32xH image and return a numpy array"""
     targetW = 1024
     targetH = 32
 
@@ -52,7 +72,7 @@ def renderText( text, font, variation ):
     actualW = inkRect.width; actualH = inkRect.height
     #  import ipdb; ipdb.set_trace()
 
-    if( variation == 'fit-height' ):
+    if( variation == VARIATIONS.fit_height ):
         fontDesc = layout.get_font_description()
         fontDesc.set_size( int(fontDesc.get_size() * targetH/ actualH ) )
         layout.set_font_description( fontDesc )
@@ -66,30 +86,32 @@ def renderText( text, font, variation ):
         inkRect, _ = layout.get_pixel_extents()
         actualW = inkRect.width; actualH = inkRect.height
 
-    if( variation == 'random' ):
-        twist = choice( twistChoices )
+    if( variation ==  VARIATIONS.random):
+        twist = choice( TWIST_CHOICES )
         context.rotate( twist * math.atan( ( targetH - actualH  )/ actualW  ) )
         if twist < 0:
             context.translate(0, targetH - actualH )
-    elif( variation == 'align-bottom' ):
+    elif( variation == VARIATIONS.alighn_bottom ):
         context.translate(0, targetH - actualH )
 
     PangoCairo.show_layout(context, layout)
     data = surface.get_data()
     data = np.frombuffer(data, dtype=np.uint8).reshape(( targetH, targetW ))
-    return np.invert( data )
+    data = np.invert( data )
+    data = np.clip( data - cv2.randn( np.zeros( data.shape, dtype=np.float ), *choice(noiseSDChoices) ), 0, 255 ).astype(np.uint8)
+    data = np.expand_dims( data, axis=0 )
+    return data
 
 
 
 
 def getTrainingTexts( txtFile ):
     lines = readFile( txtFile )
-    lines = filter( None, re.split('[\r\n]', lines ) )
+    lines = filter( None, split('[\r\n]', lines ) )
     return list(set( lines ))
 
 
-
-
+#  TODO: Move the below code into torch tensor. ( To make use of GPU )
 def normaizeImg( img ):
     img = torch.FloatTensor( img.astype('f') )
     img = ((img*2)/255 ) -1
@@ -104,6 +126,7 @@ def alignCollate( batch ):
 
 
 noiseSDChoices = [
+        #  ( mean, standard-deviation )
         (0,0),
         (10, 70),
         (12, 80),
@@ -111,16 +134,19 @@ noiseSDChoices = [
         (20, 100)
         ]
 
-class TextDataset(Dataset):
+class TextDataset:
 
-    def __init__(self, txtFile):
+    def __init__( self, txtFile, limit=None, num_workers=2, cache=None, batch_size=32 ):
         self.txtFile = txtFile
-        self.words = getTrainingTexts( txtFile )
-        self.variationCount = totalVariations
-        self.itemCount = len( self.words )*totalVariations
+        self.lines = getTrainingTexts( txtFile )
+        self.bs = batch_size
+        maxItemCount = len( self.lines )*totalVariations
+        self.itemCount =  maxItemCount if limit == None else limit
+
+        self.randomIds = sample( range( maxItemCount ), self.itemCount )
 
     def getLabel( self, index ):
-        return self.words[ int( index / totalVariations ) ]
+        return self.lines[ int( index / totalVariations ) ]
 
     def getFont( self, index ):
         return fontListFlat[ index % totalVariations ]
@@ -128,10 +154,12 @@ class TextDataset(Dataset):
     def __len__(self):
         return self.itemCount
 
-    def __getitem__(self, index):
+    def getSingleItem( self, index ):
         font, variation = self.getFont( index )
         label = self.getLabel( index )
         img = renderText( label, font, variation )
-        img = np.clip( img - cv2.randn( np.zeros( img.shape, dtype=np.float ), *choice(noiseSDChoices) ), 0, 255 ).astype(np.uint8)
-        img = np.expand_dims( img, axis=0 )
         return ( img, label)
+    def __getitem__( self, batchIndex ):
+        startIndex = batchIndex*self.bs
+        out = [ self.getSingleItem( i ) for i in self.randomIds[ startIndex: startIndex+self.bs ] ]
+        return alignCollate( out )

@@ -8,6 +8,7 @@ import yaml
 FINAL_W=32
 FINAL_H=32
 
+
 def readFile( fname ):
     opener, mode = ( gzip.open, 'rt' ) if fname[-3:] == '.gz' else ( open, 'r' )
     with opener( fname, mode ) as f:
@@ -28,7 +29,6 @@ def writeJson( fname, data ):
 def readYaml( fname ):
     with open(fname, 'r') as fp:
         return yaml.load( fp )
-
 
 
 
@@ -61,7 +61,10 @@ class averager(object):
         return res
 
 
-def loadTrainedModel( crnn, opt ):
+
+def loadTrainedModel( model, opt ):
+    """Load a pretrained model into given model"""
+
     print('loading pretrained model from %s' % opt.crnn)
     if( opt.cuda ):
         stateDict = torch.load(opt.crnn )
@@ -73,5 +76,5 @@ def loadTrainedModel( crnn, opt ):
         for key in list(stateDict.keys()): 
             stateDict[ key[ 7:] ] = stateDict[key]
             del stateDict[ key ]
-    crnn.load_state_dict( stateDict )
+    model.load_state_dict( stateDict )
     print('Completed loading pre trained model')

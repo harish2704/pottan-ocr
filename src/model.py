@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+
+#  Source: https://github.com/meijieru/crnn.pytorch/blob/master/models/crnn.py
+
 import torch.nn as nn
 
 

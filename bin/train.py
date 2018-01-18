@@ -13,12 +13,11 @@ import string_converter as converter
 from datetime import datetime
 
 import models.crnn as crnn
-from dataset import TextDataset, alignCollate
+from dataset import TextDataset
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--traindata', required=True, help='path to dataset')
 parser.add_argument('--valdata', required=True, help='path to dataset')
-parser.add_argument('--workers', type=int, help='number of data loading workers', default=1)
 parser.add_argument('--batchSize', type=int, default=64, help='input batch size')
 parser.add_argument('--imgH', type=int, default=32, help='the height of the input image to network')
 parser.add_argument('--nh', type=int, default=256, help='size of the lstm hidden state')
@@ -54,35 +53,14 @@ torch.manual_seed(opt.manualSeed)
 if torch.cuda.is_available() and not opt.cuda:
     print("WARNING: You have a CUDA device, so you should probably run with --cuda")
 
-#  if not opt.random_sample:
-    #  sampler = dataset.randomSequentialSampler(train_dataset, opt.batchSize)
-#  else:
-    #  sampler = None
-sampler = None
 
 
-
-train_dataset = TextDataset( opt.traindata )
-assert train_dataset
-train_loader = torch.utils.data.DataLoader(
-    train_dataset, batch_size=opt.batchSize,
-    shuffle=True, sampler=sampler,
-    collate_fn=alignCollate,
-    num_workers=int(opt.workers),
-    )
-
-test_dataset = TextDataset( opt.valdata )
-test_loader = torch.utils.data.DataLoader(
-            test_dataset, shuffle=True,
-            collate_fn=alignCollate,
-            batch_size=opt.batchSize, num_workers=int(opt.workers))
+train_loader = TextDataset( opt.traindata )
+test_loader = TextDataset( opt.valdata )
 
 nclass = converter.totalGlyphs
 print('Number of char class = %d' % nclass )
 
-
-#  No of channels I think
-nc = 1
 
 criterion = CTCLoss()
 
@@ -97,7 +75,8 @@ def weights_init(m):
         m.bias.data.fill_(0)
 
 
-crnn = crnn.CRNN(opt.imgH, nc, nclass, opt.nh)
+#  1 --> Number of channels
+crnn = crnn.CRNN(opt.imgH, 1, nclass, opt.nh)
 crnn.apply(weights_init)
 if opt.crnn != '':
     utils.loadTrainedModel( crnn, opt )
