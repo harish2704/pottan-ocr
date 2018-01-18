@@ -1,14 +1,18 @@
 #!/usr/bin/env bash
 
+thisFile=$( readlink -f $0 )
+thisDir=$(dirname $thisFile )
+
+export PYTHONPATH+=:$thisDir/../
 
 datagen(){
-  ./gen-glyph-list.js
-  python3 ./data_gen.py "$@"
+  # ./gen-glyph-list.js
+  python3 pottan_ocr.data_gen "$@"
   # ipython3 --matplotlib=tk ./data_gen.py
 }
 
 train(){
-  python3 train.py "$@"
+  python3 -m pottan_ocr.train "$@"
   # ipython3 --matplotlib=tk train.py -- "$@"
 }
 
@@ -37,7 +41,7 @@ EOF
   mkdir -p ./tmp
   cp "$fullPath" "$workingCopy"
   python ./ocropy/ocropus-gpageseg "$workingCopy" -n
-  python3  ./bin/ocr.py --crnn "$crnnPath"  "$linesDir"/*.png
+  python3  -m pottan_ocr.ocr --crnn "$crnnPath"  "$linesDir"/*.png
   rename s/bin.txt/txt/ "$linesDir"/*.txt
   python ./ocropy/ocropus-hocr "$workingCopy" -o ./tmp/out.html
   xdg-open ./tmp/out.html
