@@ -59,8 +59,8 @@ if torch.cuda.is_available() and not opt.cuda:
 
 
 
-train_loader = TextDataset( opt.traindata, batch_size=opt.batchSize, limit=opt.traindata_limit, cache=opt.traindata_cache )
-test_loader = TextDataset( opt.valdata, batch_size=opt.batchSize, limit=opt.valdata_limit, cache=opt.valdata_cache )
+train_loader = TextDataset( opt.traindata, batchSize=opt.batchSize, limit=opt.traindata_limit, cache=opt.traindata_cache )
+test_loader = TextDataset( opt.valdata, batchSize=opt.batchSize, limit=opt.valdata_limit, cache=opt.valdata_cache )
 
 nclass = converter.totalGlyphs
 print('Number of char class = %d' % nclass )
@@ -131,7 +131,7 @@ def val(net, criterion, max_iter=10):
     for i, data in enumerate( test_loader ):
         cpu_images, cpu_texts = data
 
-        batch_size = cpu_images.size(0)
+        batchSize = cpu_images.size(0)
         txts, lengths = converter.encode(cpu_texts)
         #  image = Variable( cpu_images )
         #  text = Variable( txts )
@@ -142,7 +142,7 @@ def val(net, criterion, max_iter=10):
 
         preds = crnn(image)
         preds_size = Variable(torch.IntTensor( [preds.size(0)] * preds.size(1) ))
-        cost = criterion(preds, text, preds_size, length) / batch_size
+        cost = criterion(preds, text, preds_size, length) / batchSize
         loss_avg.add(cost)
 
         _, preds = preds.max(2)
@@ -164,7 +164,7 @@ def val(net, criterion, max_iter=10):
 def trainBatch( data ):
     cpu_images, cpu_texts = data
 
-    batch_size = cpu_images.size(0)
+    batchSize = cpu_images.size(0)
     txts, lengths = converter.encode(cpu_texts)
 
     #  image = Variable( cpu_images )
@@ -176,7 +176,7 @@ def trainBatch( data ):
 
     preds = crnn(image)
     preds_size = Variable(torch.IntTensor( [preds.size(0)] * preds.size(1) ))
-    cost = criterion(preds, text, preds_size, length) / batch_size
+    cost = criterion(preds, text, preds_size, length) / batchSize
     crnn.zero_grad()
     cost.backward()
     optimizer.step()

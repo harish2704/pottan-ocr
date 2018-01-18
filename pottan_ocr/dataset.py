@@ -12,9 +12,8 @@ from collections import Sequence
 from random import choice, sample
 from re import split
 import numpy as np
-from numpy.random import randn
+from numpy.random import normal
 from PIL import Image
-import cv2
 import cairo
 import gi
 gi.require_version('Pango', '1.0')
@@ -22,19 +21,19 @@ gi.require_version('PangoCairo', '1.0')
 from gi.repository import Pango, PangoCairo
 
 
+#  Text alignment variations
 VARIATIONS = Enum('AlignmentVariation', 'random alighn_bottom fit_height' )
 
 fontList = config['fonts']
 fontListFlat = []
 for fnt, styles in fontList:
     for style in styles:
-        fontDescStr = '%s %s 18' %( fnt, style )
+        fontDescStr = '%s %s 16' %( fnt, style )
         fontListFlat.append([ fontDescStr, VARIATIONS.random,       ])
         fontListFlat.append([ fontDescStr,  VARIATIONS.alighn_bottom ])
         fontListFlat.append([ fontDescStr,  VARIATIONS.fit_height ])
 
 totalVariations = len(fontListFlat)
-print( 'Total font variations = %d'% totalVariations )
 
 
 #  Pango FontDescription cache
@@ -46,9 +45,20 @@ fontDescCache = {};
 #  +1 --> Maximum possible positive rotation with in available free space
 TWIST_CHOICES = [ -1, -0.95, -0.85, 0.85, 0.95, 1 ]
 
+noiseSDChoices = [
+        #  ( mean, standard-deviation ) of normal distribution
+        (0,0),
+        (10, 50),
+        (12, 60),
+        (15, 70),
+        (20, 75)
+        ]
 
 targetW = 1024
+#  let Canvas have some extra space than required so that, we can handle text overflow easly
+canvasWidth = targetW*2
 targetH = 32
+
 
 ##
 #
@@ -60,7 +70,7 @@ targetH = 32
 def renderText( text, font, variation ):
     """Render a unicode text into 32xH image and return a numpy array"""
 
-    surface = cairo.ImageSurface(cairo.FORMAT_A8, targetW, targetH )
+    surface = cairo.ImageSurface(cairo.FORMAT_A8, canvasWidth, targetH )
     context = cairo.Context(surface)
     pc = PangoCairo.create_context(context)
     layout = PangoCairo.create_layout(context)
@@ -73,23 +83,16 @@ def renderText( text, font, variation ):
 
     inkRect, _ = layout.get_pixel_extents()
     actualW = inkRect.width; actualH = inkRect.height
-    #  import ipdb; ipdb.set_trace()
 
     if( variation == VARIATIONS.fit_height ):
+        #  Fit-height is done by varying font size
         fontDesc = layout.get_font_description()
-        fontDesc.set_size( int(fontDesc.get_size() * targetH/ actualH ) )
+        fontDesc.set_size( int(fontDesc.get_size() * 0.9 * targetH/ actualH ) )
         layout.set_font_description( fontDesc )
         inkRect, _ = layout.get_pixel_extents()
         actualW = inkRect.width; actualH = inkRect.height
-
-    if( actualW > targetW ):
-        fontDesc = layout.get_font_description()
-        fontDesc.set_size( int(fontDesc.get_size() * 0.9 * targetW/ actualW  ) )
-        layout.set_font_description( fontDesc )
-        inkRect, _ = layout.get_pixel_extents()
-        actualW = inkRect.width; actualH = inkRect.height
-
-    if( variation ==  VARIATIONS.random):
+    elif( variation ==  VARIATIONS.random):
+        # Random alignment means random rotation
         twist = choice( TWIST_CHOICES )
         context.rotate( twist * math.atan( ( targetH - actualH  )/ actualW  ) )
         if twist < 0:
@@ -97,11 +100,23 @@ def renderText( text, font, variation ):
     elif( variation == VARIATIONS.alighn_bottom ):
         context.translate(0, targetH - actualH )
 
+
+
     PangoCairo.show_layout(context, layout)
     data = surface.get_data()
-    data = np.frombuffer(data, dtype=np.uint8).reshape(( targetH, targetW ))
-    data = np.invert( data )
-    data = np.clip( data - cv2.randn( np.zeros( data.shape, dtype=np.float ), *choice(noiseSDChoices) ), 0, 255 ).astype(np.uint8)
+
+    if( actualW > targetW ):
+        #  Resize image by shrinking the width of image
+        data = np.frombuffer(data, dtype=np.uint8).reshape(( targetH, canvasWidth ))[:, :actualW + 10]
+        data = Image.fromarray( data ).resize( ( targetW, targetH ), Image.BILINEAR )
+        data = np.array( data )
+    else:
+        data = np.frombuffer(data, dtype=np.uint8).reshape(( targetH, canvasWidth ))[:, :targetW]
+
+    data = np.invert( data ) # becuase pango will render white text on black
+
+    # Add create a noise layer and merge with image
+    data = np.clip( data - normal(  *choice(noiseSDChoices), data.shape ), 0, 255 ).astype(np.uint8)
     return data
 
 
@@ -119,32 +134,24 @@ def normaizeImg( img ):
     return img.unsqueeze(0)
 
 
-def alignCollate( batch ):
+def normalizeBatch( batch ):
     images, labels = zip(*batch)
     images = [ normaizeImg(image) for image in images]
     images = torch.stack( images )
     return images, labels
 
 
-noiseSDChoices = [
-        #  ( mean, standard-deviation )
-        (0,0),
-        (10, 70),
-        (12, 80),
-        (15, 90),
-        (20, 100)
-        ]
 
 class TextDataset( Sequence ):
 
-    def __init__( self, txtFile, limit=None, num_workers=2, cache=None, batch_size=32 ):
+    def __init__( self, txtFile, limit=None, num_workers=2, cache=None, batchSize=32 ):
         self.txtFile = txtFile
         self.lines = getTrainingTexts( txtFile )
-        self.bs = batch_size
+        self.bs = batchSize
         self.cache = cache
         maxItemCount = len( self.lines )*totalVariations
         self.itemCount =  maxItemCount if limit == None else limit
-        self.batchCount = int( self.itemCount/batch_size )
+        self.batchCount = int( self.itemCount/batchSize )
         self.randomIds = sample( range( maxItemCount ), self.itemCount )
         if cache != None:
             os.system( 'mkdir -p "%s"' % cache )
@@ -168,6 +175,7 @@ class TextDataset( Sequence ):
         if( batchIndex >= self.batchCount ):
             raise StopIteration
 
+        #  cacheImage = '%s/batch_%03d_%06d.pgm' %( self.cache, self.bs, batchIndex)
         cacheImage = '%s/batch_%03d_%06d.jpg' %( self.cache, self.bs, batchIndex)
         cacheLabels = '%s/batch_%03d_%06d.txt' %( self.cache, self.bs, batchIndex)
         if( self.cache and os.path.exists( cacheImage ) ):
@@ -184,4 +192,4 @@ class TextDataset( Sequence ):
             images = Image.fromarray( np.concatenate( images, 0) )
             images.save( cacheImage, 'JPEG', quality=50 )
             writeFile( cacheLabels, '\n'.join( labels ) )
-        return alignCollate( out )
+        return normalizeBatch( out )
