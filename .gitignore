@@ -12,3 +12,7 @@ env.sh
 *.png
 tmp/*
 config.yaml
+
+
+.floydexpt
+.floydignore
