@@ -7,7 +7,7 @@ export PYTHONPATH+=:$thisDir/../
 
 datagen(){
   # ./gen-glyph-list.js
-  python3 pottan_ocr.data_gen "$@"
+  python3 -m pottan_ocr.data_gen "$@"
   # ipython3 --matplotlib=tk ./data_gen.py
 }
 
