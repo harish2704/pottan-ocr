@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 
-from .utils import config, readLines
+from .utils import config, readLines, writeFile
 
 import torch
 from torch.utils.data import Dataset
 
+import os
 import math
 from enum import Enum
 from collections import Sequence
@@ -12,6 +13,7 @@ from random import choice, sample
 from re import split
 import numpy as np
 from numpy.random import randn
+from PIL import Image
 import cv2
 import cairo
 import gi
@@ -45,6 +47,8 @@ fontDescCache = {};
 TWIST_CHOICES = [ -1, -0.95, -0.85, 0.85, 0.95, 1 ]
 
 
+targetW = 1024
+targetH = 32
 
 ##
 #
@@ -55,8 +59,6 @@ TWIST_CHOICES = [ -1, -0.95, -0.85, 0.85, 0.95, 1 ]
 # @return numpy.array
 def renderText( text, font, variation ):
     """Render a unicode text into 32xH image and return a numpy array"""
-    targetW = 1024
-    targetH = 32
 
     surface = cairo.ImageSurface(cairo.FORMAT_A8, targetW, targetH )
     context = cairo.Context(surface)
@@ -100,7 +102,6 @@ def renderText( text, font, variation ):
     data = np.frombuffer(data, dtype=np.uint8).reshape(( targetH, targetW ))
     data = np.invert( data )
     data = np.clip( data - cv2.randn( np.zeros( data.shape, dtype=np.float ), *choice(noiseSDChoices) ), 0, 255 ).astype(np.uint8)
-    data = np.expand_dims( data, axis=0 )
     return data
 
 
@@ -112,17 +113,16 @@ def getTrainingTexts( txtFile ):
     return list(set( lines ))
 
 
-#  TODO: Move the below code into torch tensor. ( To make use of GPU )
 def normaizeImg( img ):
     img = torch.FloatTensor( img.astype('f') )
     img = ((img*2)/255 ) -1
-    return img
+    return img.unsqueeze(0)
 
 
 def alignCollate( batch ):
     images, labels = zip(*batch)
     images = [ normaizeImg(image) for image in images]
-    images = torch.cat([t.unsqueeze(0) for t in images], 0)
+    images = torch.stack( images )
     return images, labels
 
 
@@ -146,6 +146,8 @@ class TextDataset( Sequence ):
         self.itemCount =  maxItemCount if limit == None else limit
         self.batchCount = int( self.itemCount/batch_size )
         self.randomIds = sample( range( maxItemCount ), self.itemCount )
+        if cache != None:
+            os.system( 'mkdir -p "%s"' % cache )
 
     def getLabel( self, index ):
         return self.lines[ int( index / totalVariations ) ]
@@ -166,13 +168,20 @@ class TextDataset( Sequence ):
         if( batchIndex >= self.batchCount ):
             raise StopIteration
 
-        cacheImage = '%s/batch_%03d_%06d.pgm' %( self.cache, self.bs, index)
-        cacheLabels = '%s/batch_%03d_%06d.txt' %( self.cache, self.bs, index)
+        cacheImage = '%s/batch_%03d_%06d.jpg' %( self.cache, self.bs, batchIndex)
+        cacheLabels = '%s/batch_%03d_%06d.txt' %( self.cache, self.bs, batchIndex)
         if( self.cache and os.path.exists( cacheImage ) ):
-            images = Image.open( cacheImage )
             labels = readLines( cacheLabels )
-            out = zip( images, labels )
+            images = np.array_split( np.array( Image.open( cacheImage ) ), len( labels ) )
+            out = list( zip( images, labels ) )
         else:
             startIndex = batchIndex*self.bs
             out = [ self.getSingleItem( i ) for i in self.randomIds[ startIndex: startIndex+self.bs ] ]
+
+        #  write cache
+        if( self.cache ):
+            images, labels = zip( *out )
+            images = Image.fromarray( np.concatenate( images, 0) )
+            images.save( cacheImage, 'JPEG', quality=50 )
+            writeFile( cacheLabels, '\n'.join( labels ) )
         return alignCollate( out )

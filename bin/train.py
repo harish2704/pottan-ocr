@@ -20,9 +20,11 @@ IMAGE_H = 32
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--traindata', required=True, help='path to dataset')
-parser.add_argument('--valdata', required=True, help='path to dataset')
 parser.add_argument('--traindata_limit', type=int, default=51200, help='Limit the training dataset size')
+parser.add_argument('--traindata_cache', default=None, help='Cache Directory for caching generated train data')
+parser.add_argument('--valdata', required=True, help='path to dataset')
 parser.add_argument('--valdata_limit', type=int, default=4096, help='Limit the validation dataset size')
+parser.add_argument('--valdata_cache', default=None, help='Cache Directory for caching generated validation data')
 parser.add_argument('--batchSize', type=int, default=64, help='input batch size')
 parser.add_argument('--nh', type=int, default=256, help='size of the lstm hidden state')
 parser.add_argument('--niter', type=int, default=25, help='number of epochs to train for')
@@ -57,8 +59,8 @@ if torch.cuda.is_available() and not opt.cuda:
 
 
 
-train_loader = TextDataset( opt.traindata, batch_size=opt.batchSize, limit=opt.traindata_limit )
-test_loader = TextDataset( opt.valdata, batch_size=opt.batchSize, limit=opt.valdata_limit )
+train_loader = TextDataset( opt.traindata, batch_size=opt.batchSize, limit=opt.traindata_limit, cache=opt.traindata_cache )
+test_loader = TextDataset( opt.valdata, batch_size=opt.batchSize, limit=opt.valdata_limit, cache=opt.valdata_cache )
 
 nclass = converter.totalGlyphs
 print('Number of char class = %d' % nclass )
