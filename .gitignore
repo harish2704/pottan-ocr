@@ -1,24 +1,14 @@
 
-cache/extracted
-
 .ipynb_checkpoints
-cache/generated
 
-data
 __pycache__
 .vscode
 *.pyc
 
-misc/warp-ctc-master
-misc/warp_ctc_install
-misc/warp-ctc-pytorch_bindings
-misc/*.zip
+misc/*
 env.sh
-
-node_modules
-yarn-error.log
 *.pth
 
-fontlist.yaml
 *.png
 tmp/*
+config.yaml
