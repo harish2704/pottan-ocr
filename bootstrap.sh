@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# MACH=k80
+MACH=v100
+
 # Prevent apt cache cleaning so that we can back up the files for future use
 rm /etc/apt/apt.conf.d/docker-clean
 
@@ -16,8 +19,8 @@ fi
 pip3 install PyGobject
 
 echo '== Installing precompiled deps'
-tar -xzvf /basedeps/k80-precompiled/war-ctc.tar.gz -C /
-tar -xzvf /basedeps/k80-precompiled/warpctc_pytorch-0.1.linux-x86_64.tar.gz -C /
+tar -xzvf /basedeps/$MACH-precompiled/war-ctc.tar.gz -C /
+tar -xzvf /basedeps/$MACH-precompiled/warpctc_pytorch-0.1.linux-x86_64.tar.gz -C /
 
 echo '== Installing fonts'
 mkdir -p $HOME/.local/share/fonts
