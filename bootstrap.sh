@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# MACH=k80
-MACH=v100
+MACH=k80
+# MACH=v100
 
 # Prevent apt cache cleaning so that we can back up the files for future use
 rm /etc/apt/apt.conf.d/docker-clean
@@ -32,6 +32,7 @@ fc-list :lang=ml
 
 echo '== Starting training'
 
+if false; then
 bash ./bin/pottan datagen \
   --batchSize 64 \
   --input /datadeps/train.txt.gz  \
@@ -43,18 +44,20 @@ bash ./bin/pottan datagen \
   --input /datadeps/validate.txt.gz  \
   --count $(( 256* 16)) \
   --output /output/valdata_cache
+fi
 
 bash ./bin/pottan train \
   --cuda \
+  --crnn /presession2/$1 \
   --traindata /datadeps/train.txt.gz  \
   --traindata_limit $(( 256* 512)) \
-  --traindata_cache /output/traindata_cache \
+  --traindata_cache /presession/traindata_cache \
   --valdata /datadeps/validate.txt.gz \
   --valdata_limit $(( 256* 16 )) \
-  --valdata_cache /output/valdata_cache \
+  --valdata_cache /presession/valdata_cache \
   --valInterval 512 \
   --batchSize 64 \
-  --lr 0.0005 \
+  --lr 0.00005 \
   --niter 50 \
   --outdir /output \
   --displayInterval 50 \
