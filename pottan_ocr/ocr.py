@@ -43,7 +43,7 @@ def threadInitializer( opt ):
 
 def main( opt ):
     totalImages = len( opt.image_paths )
-    pool = multiprocessing.Pool( multiprocessing.cpu_count(), initializer=threadInitializer, initargs=( opt, ) )
+    pool = multiprocessing.Pool( multiprocessing.cpu_count()-1, initializer=threadInitializer, initargs=( opt, ) )
     results = [ pool.apply_async( evalModel, ( img_path, idx, totalImages ) ) for idx, img_path in enumerate( opt.image_paths ) ]
     for idx, result in enumerate( results ):
         img_path = opt.image_paths[ idx ]

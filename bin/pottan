@@ -33,15 +33,17 @@ EOF
   fi
 
   rm -rf tmp/*
-  shift
+  shift 2
   baseName=$(basename "$fullPath")
   withoutExt="${baseName%.*}"
   workingCopy="./tmp/$baseName"
   linesDir="./tmp/$withoutExt"
   mkdir -p ./tmp
   cp "$fullPath" "$workingCopy"
-  python ./ocropy/ocropus-gpageseg "$workingCopy" -n
-  python3  -m pottan_ocr.ocr --crnn "$crnnPath"  "$linesDir"/*.png
+  cp "$fullPath" "./tmp/$withoutExt.nrm.png"
+  python ./ocropy/ocropus-gpageseg "$workingCopy" -n --gray -p 1 
+  rm "$linesDir"/*bin.png; rename s/nrm.png/bin.png/ "$linesDir"/*nrm.png
+  python3  -m pottan_ocr.ocr --crnn "$crnnPath"  "$linesDir"/*bin.png "$@"
   rename s/bin.txt/txt/ "$linesDir"/*.txt
   python ./ocropy/ocropus-hocr "$workingCopy" -o ./tmp/out.html
   xdg-open ./tmp/out.html
