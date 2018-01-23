@@ -27,7 +27,7 @@ def evalModel( img_path, current, total ):
     global crnnModel
     print( 'Progress %d/%d' %( current, total ), file=sys.stderr )
     image = loadImg( img_path )
-    image = image.view(1, *image.size())
+    image = image.unsqueeze(0)
     image = Variable(image)
     preds = crnnModel(image)
     _, preds = preds.max(2)
