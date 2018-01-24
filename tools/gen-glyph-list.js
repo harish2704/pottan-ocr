@@ -5,6 +5,8 @@ var _l = function charList( str ){
   return str.split('-');
 };
 
+var outputFormat = process.argv[2] === '--json' ? 'JSON' : 'YAML';
+
 function crossProd( a, b ){
   var twoDimList = b.map( b1 => a.map( a1 => a1+b1 ) );
   return Array.prototype.concat.apply( [], twoDimList );
@@ -107,6 +109,9 @@ var misc = [
 
 allItems = misc.concat( allItems );
 allItems = allItems.filter( v => v.length ===1 ).concat( ['\u200c', '\u200d' ]);
-// console.log(  JSON.stringify( allItems, null, 1 ) );
-allItems.forEach(v => console.log('- "'+ ( v ==='"' ? '\\"' : v  )+'"'))
+if( outputFormat === 'JSON' ){
+  console.log(  JSON.stringify( allItems, null, 1 ) );
+} else {
+  allItems.forEach(v => console.log('- "'+ ( v ==='"' ? '\\"' : v  )+'"'))
+}
 
