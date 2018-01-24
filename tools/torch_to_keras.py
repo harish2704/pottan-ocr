@@ -110,7 +110,47 @@ for torchLayerName in set( [ layerNameFromParamKey(i) for i in torchStateDict ])
 
 
 from pottan_ocr.ocr import loadImg
-Tip = loadImg('/home/hari/tmp/ocr-related/keras-js/demos/data/test.jpg').unsqueeze(0)
+from pottan_ocr import utils
+Tip = loadImg('/home/hari/tmp/ocr-related/keras-js/demos/data/test2.jpg').unsqueeze(0)
+
+allTmods =[ [ i, name ] for name,i in Tcrnn.named_modules() if len(list( i.modules() )) == 1 ]
+cnnTmods =allTmods[:21]
+tin = Variable(Tip)
+outs = []
+for mod, name in cnnTmods:
+    print( 'Running %s' % name )
+    tin = mod( tin )
+    outs.append( [tin, name ])
+
+b, c, h, w = tin.size()
+assert h == 1, "the height of output must be 1"
+tin = tin.squeeze(2)
+tin = tin.permute(2, 0, 1)  # [w, b, c]
+for i in range(2):
+    lstm, lstmName = allTmods[ 21 + (i*2) ]
+    linear, linearName = allTmods[ 22 + (i*2) ]
+    tin, _ = lstm( tin )
+    outs.append( [tin, lstmName ])
+
+    T, b, h = tin.size()
+    tin = tin.view(T * b, h)
+
+    tin = linear(tin)  # [T * b, nOut]
+    tin = tin.view(T, b, -1)
+    outs.append( [tin, linearName ])
+
+
+jsonOut = [];
+for data, name in outs:
+    jsonOut.append({
+        'name': name,
+        'data': data.tolist(),
+        'shape': data.shape
+        })
+
+import json
+utils.writeFile( './tdebug.json', json.dumps( jsonOut ) )
+
 
 
 #  TcnnBig = nn.Sequential( *list( list( Tcrnn.children() )[0].children() )[:] )
@@ -118,8 +158,8 @@ Tip = loadImg('/home/hari/tmp/ocr-related/keras-js/demos/data/test.jpg').unsquee
 #  KcnnBig = Sequential( Kcrnn.layers[:] )
 TcnnBig = Tcrnn
 KcnnBig = Kcrnn
-ToutBig = TcnnBig( Variable(Tip) )
-KoutBig = torch.from_numpy( KcnnBig.predict( Tip.numpy() ) )
+ToutBig = TcnnBig( Variable(Tip) ).data
+KoutBig = torch.from_numpy( KcnnBig.predict( Tip.permute(0,2,3,1).numpy() ) )
 
 #  TcnnA = nn.Sequential( *list( list( Tcrnn.children() )[0].children() )[:7] )
 #  KcnnA = Sequential( Kcrnn.layers[:10] )
@@ -136,5 +176,5 @@ KoutBig = torch.from_numpy( KcnnBig.predict( Tip.numpy() ) )
 #  ToutB = TcnnB( Variable( torch.from_numpy( ToutA ) ) ).data.numpy()
 #  KoutB = KcnnB.predict( KoutA )
 
-diff = KoutBig - ToutBig.transpose( 1,0,2 )
+diff = KoutBig - ToutBig.permute( 1,0,2 )
 print( 'Max: ', diff.max() )
