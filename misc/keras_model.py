@@ -1,10 +1,8 @@
 
 import keras
 from keras import backend as K
-from keras.models import Sequential, Model
-from keras.engine.topology import Layer
-from keras.layers import Dense, Dropout, Flatten, BatchNormalization, Activation, MaxPooling2D, TimeDistributed, Input, Embedding, Bidirectional, LSTM
-from keras.layers import Conv2D, MaxPooling2D, ZeroPadding2D, Permute, Lambda, Reshape
+from keras.models import Sequential
+from keras.layers import Dense, BatchNormalization, Activation, MaxPooling2D, TimeDistributed, Bidirectional, LSTM, Conv2D, ZeroPadding2D, Permute, Reshape
 K.set_image_data_format('channels_last')
 
 
@@ -23,7 +21,7 @@ def KerasCrnn(imgH=32, nc=1, nclass=134, nh=64 ):
         padding = 'same' if ps[i] else 'valid'
 
         if( i == 0):
-            cnn.add( Conv2D( nOut, ks[i], strides=ss[i], input_shape=( 32, 640, 1 ), padding=padding, name='conv{0}'.format(i) ) )
+            cnn.add( Conv2D( nOut, ks[i], strides=ss[i], input_shape=( 32, None, 1 ), padding=padding, name='conv{0}'.format(i) ) )
         else:
             cnn.add( Conv2D( nOut, ks[i], strides=ss[i], padding=padding, name='conv{0}'.format(i) ) )
         if batchNormalization:
@@ -45,7 +43,6 @@ def KerasCrnn(imgH=32, nc=1, nclass=134, nh=64 ):
     convRelu(6, True )  # 512x1x16
 
     cnn.add(Reshape((-1, 512)))
-    #  cnn.add(Permute((2, 1)))
     cnn.add(Bidirectional( LSTM(64 , return_sequences=True, use_bias=True, recurrent_activation='sigmoid', )) )
     cnn.add( TimeDistributed( Dense(64) ) )
     cnn.add(Bidirectional( LSTM(64 , return_sequences=True, use_bias=True, recurrent_activation='sigmoid', )) )
