@@ -12,3 +12,5 @@ env.sh
 *.png
 tmp/*
 config.yaml
+
+web-demo/dist

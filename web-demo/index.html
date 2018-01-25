@@ -1,0 +1,53 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Pottan-ocr demo</title>
+  <link rel="stylesheet" href="./dist/main.bundle.css" type="text/css" media="all" />
+</head>
+<body >
+
+  <div class="container">
+
+    <div class="row">
+      <div class="col-md-12">
+        <h2>Instructions</h2>
+        <ol>
+          <li>This tool can only recognize a single line of text. <strong>So we have to select a single line of text from the image below</strong> </li>
+          <li>Optionally we can load a different image from pc by clicking 'Choose another image' button</li>
+          <li>Click on <strong>Run recognizer</strong> button. It will take a few second to complete the action. Result will be displayed just above the image</li>
+          <li>
+            <strong>Please note that, padding (extra white-space) in the selection will affect the output result.</strong>
+          </li>
+        </ol>
+      </div>
+      <div class="col-md-12 col-md-offset-1">
+        <div class="form-group">
+          <div class="input-group input-file" >
+            <input type="text" class="form-control" placeholder='Choose a file...' />			
+            <span class="input-group-btn">
+              <button class="btn btn-primary btn-choose" type="button">Choose another image</button>
+              <button class="btn btn-success pull-right" id="run-btn">Run recognizer</button>
+            </span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-12">
+        <h2>
+        <code id="output"> ---- Output ---- </code>
+        </h2>
+        <br />
+        <br />
+      </div>
+
+      <div class="col-md-12">
+        <img id="for-cropper" class="img-thumbnail" src="./data/sample.png" alt="Selected image"/>
+      </div>
+    </div>
+
+
+  </div>
+  <script src="./js/keras.min.js" type="text/javascript" charset="utf-8"></script>
+  <script src="./dist/main.bundle.js" type="text/javascript" charset="utf-8"></script>
+</body>
+</html>
