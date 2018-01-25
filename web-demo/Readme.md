@@ -1,6 +1,6 @@
 ### What is this?
 
-This is a static client side web-application which can run trained models of OCR inside a web browser.
+This is a static client side web-application which can run trained models of OCR inside a web browser. See [Demo](http://harish2704.github.io/pottan-demo/)
 
 ### How it is working ?
 
