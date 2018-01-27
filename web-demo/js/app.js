@@ -32,7 +32,8 @@ $(function() {
   var tmpScaleCanvasCtx = tmpScaleCanvas.getContext('2d');
   var imgCropper = img.cropper();
 
-  function bs_input_file() {
+  function initUi() {
+
     $(".input-file").before(
       function() {
         if ( !$(this).prev().hasClass('input-ghost') ) {
@@ -55,6 +56,10 @@ $(function() {
         }
       }
     );
+
+    $('#rotate-buttons > button').click(function(){
+      imgCropper.data('cropper').rotate( $(this).data().degree )
+    });
   }
 
 
@@ -75,7 +80,7 @@ $(function() {
     }).join('');
   }
 
-  bs_input_file();
+  initUi();
   $('#run-btn').click(function(){
     if( !imgCropper ){
       return ;
