@@ -54,13 +54,22 @@ def main( opt ):
             fname = '%s.txt'% splitext( img_path )[0]
             utils.writeFile( fname, text )
 
+def findNHFromFile( opt ):
+    if( opt.cuda ):
+        stateDict = torch.load(opt.crnn )
+    else:
+        stateDict = torch.load(opt.crnn, map_location={'cuda:0': 'cpu'} )
+    nh = stateDict['module.rnn.0.embedding.bias'].shape[0]
+    print( "Number of hidden layers ( --nh ) = %d" % nh )
+    return nh
+
 
 if( __name__ == '__main__' ):
     parser = argparse.ArgumentParser()
     parser.add_argument('image_paths', help='Path image file', nargs="+" )
     parser.add_argument('--crnn', required=True, help="path to pre trained model state ( .pth file)")
     parser.add_argument('--cuda', action='store_true', help='enables cuda')
-    parser.add_argument('--nh', type=int, default=256, help='size of the lstm hidden state')
     parser.add_argument('--stdout', action='store_true', help='Write output to stdout instead of saving it as <imgfile>.txt')
     opt = parser.parse_args()
+    opt.nh = findNHFromFile( opt )
     main( opt )

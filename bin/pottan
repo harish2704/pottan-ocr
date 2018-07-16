@@ -26,7 +26,7 @@ ocr(){
   crnnPath="$1"
   fullPath="$2"
   if [[ $1 == '--help' || $1 == '-h' || -z $1 ]];then
-cat<<EOF
+  cat<<EOF
 Usage: ./pottan ocr <trained_model.pth> <iamge_path>
 EOF
   exit 0;
@@ -42,11 +42,16 @@ EOF
   cp "$fullPath" "$workingCopy"
   cp "$fullPath" "./tmp/$withoutExt.nrm.png"
   python ./ocropy/ocropus-gpageseg "$workingCopy" -n --gray -p 1 
-  rm "$linesDir"/*bin.png; rename s/nrm.png/bin.png/ "$linesDir"/*nrm.png
+  rm "$linesDir"/*bin.png; prename s/nrm.png/bin.png/ "$linesDir"/*nrm.png
   python3  -m pottan_ocr.ocr --crnn "$crnnPath"  "$linesDir"/*bin.png "$@"
-  rename s/bin.txt/txt/ "$linesDir"/*.txt
+  prename -f s/bin.txt/txt/ "$linesDir"/*.txt
   python ./ocropy/ocropus-hocr "$workingCopy" -o ./tmp/out.html
-  xdg-open ./tmp/out.html
+
+  if which xdg-open; then
+    xdg-open ./tmp/out.html
+  else
+    echo "OCR completed. Open '$(readlink -f ./tmp/out.html)' to see the results"
+  fi
 }
 
 
