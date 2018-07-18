@@ -4,6 +4,22 @@ thisFile=$( readlink -f $0 )
 thisDir=$(dirname $thisFile )
 
 export PYTHONPATH+=:$thisDir/../
+export PYTHONIOENCODING=utf-8
+
+
+# distro independent wrapper for rename command.
+# There are two different versions of rename command exists in linux world.
+isPerRenameAvailable=$(rename -V | grep -v util-linux)
+my_rename(){
+  str=$1; shift
+  replace=$1; shift
+
+  if [[ -n $isPerRenameAvailable ]]; then
+    rename -f "s/$str/$replace/" $@
+  else
+    rename $str $replace $@
+  fi
+}
 
 datagen(){
   # ./gen-glyph-list.js
@@ -42,9 +58,9 @@ EOF
   cp "$fullPath" "$workingCopy"
   cp "$fullPath" "./tmp/$withoutExt.nrm.png"
   python ./ocropy/ocropus-gpageseg "$workingCopy" -n --gray -p 1 
-  rm "$linesDir"/*bin.png; prename s/nrm.png/bin.png/ "$linesDir"/*nrm.png
+  rm "$linesDir"/*bin.png; my_rename nrm.png bin.png "$linesDir"/*nrm.png
   python3  -m pottan_ocr.ocr --crnn "$crnnPath"  "$linesDir"/*bin.png "$@"
-  prename -f s/bin.txt/txt/ "$linesDir"/*.txt
+  my_rename bin.txt txt "$linesDir"/*.txt
   python ./ocropy/ocropus-hocr "$workingCopy" -o ./tmp/out.html
 
   if which xdg-open; then
