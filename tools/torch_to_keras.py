@@ -12,24 +12,35 @@ from keras.engine.topology import Layer
 from keras.layers import Dense, Dropout, Flatten, BatchNormalization, Activation, MaxPooling2D, TimeDistributed, Input, Embedding, Bidirectional, LSTM
 from keras.layers import Conv2D, MaxPooling2D, ZeroPadding2D, Permute, Lambda, Reshape
 
-from pottan_ocr.model import CRNN as CRNNT
-from misc.keras_model import KerasCrnn as CRNNK
+from pottan_ocr.model import CRNN as TCRNN
+from misc.keras_model import KerasCrnn as KCRNN
 from pottan_ocr import string_converter as converter
 from pottan_ocr import utils
 
+TEST_IMG = '/home/hari/tmp/ocr-related/keras-js/demos/data/test2.jpg'
+TRAINED_TORCH_MODEL =  '/home/hari/Downloads/netCRNN_01-19-06-09-54_3.pth'
+
+"""
+Variable naming:
+    Variables with prefix 'T' stands for Torch
+    Variables with prefix 'K' stands for Keras
+"""
+
+# A Syntactic sugar to convert Dict into object
 dictToObj = lambda x: namedtuple('Struct', x.keys() )( *x.values() )
+
 opt = dictToObj({
-    'crnn': '/home/hari/Downloads/netCRNN_01-19-06-09-54_3.pth',
+    'crnn': TRAINED_TORCH_MODEL,
     'cuda': False,
     'nh': 64
     })
 
 
-Tcrnn = CRNNT(32, 1, converter.totalGlyphs, opt.nh )
+Tcrnn = TCRNN(32, 1, converter.totalGlyphs, opt.nh )
 utils.loadTrainedModel( Tcrnn, opt )
 Tcrnn.eval()
 
-Kcrnn = CRNNK( imgH=32, nc=1, nclass=converter.totalGlyphs, nh=opt.nh )
+Kcrnn = KCRNN( imgH=32, nc=1, nclass=converter.totalGlyphs, nh=opt.nh )
 
 layerMapping = {
         'cnn.batchnorm2': 'batchnorm2',
@@ -86,6 +97,7 @@ def Conv2d( tLayer, kLayer ):
     newKparams[0] = newKparams[0].transpose( 2,3,1,0 )
     kLayer.set_weights( newKparams )
 
+#  each transfer function handles state transfer from Torch layer to Keras layer
 transferFunctions = {
         'Conv2d': Conv2d,
         'LSTM': LSTM,
@@ -108,14 +120,16 @@ for torchLayerName in set( [ layerNameFromParamKey(i) for i in torchStateDict ])
     transferFunctions[ torchLayerType ]( torchLayer, kerasLayer )
 
 
+print( 'State transfer completed...\n Verifying Keras model')
+
 
 from pottan_ocr.ocr import loadImg
 from pottan_ocr import utils
-Tip = loadImg('/home/hari/tmp/ocr-related/keras-js/demos/data/test2.jpg').unsqueeze(0)
+imgIn = loadImg( TEST_IMG ).unsqueeze(0)
 
 allTmods =[ [ i, name ] for name,i in Tcrnn.named_modules() if len(list( i.modules() )) == 1 ]
 cnnTmods =allTmods[:21]
-tin = Variable(Tip)
+tin = Variable(imgIn)
 outs = []
 for mod, name in cnnTmods:
     print( 'Running %s' % name )
@@ -140,16 +154,6 @@ for i in range(2):
     outs.append( [tin, linearName ])
 
 
-jsonOut = [];
-for data, name in outs:
-    jsonOut.append({
-        'name': name,
-        'data': data.tolist(),
-        'shape': data.shape
-        })
-
-import json
-utils.writeFile( './tdebug.json', json.dumps( jsonOut ) )
 
 
 
@@ -158,13 +162,13 @@ utils.writeFile( './tdebug.json', json.dumps( jsonOut ) )
 #  KcnnBig = Sequential( Kcrnn.layers[:] )
 TcnnBig = Tcrnn
 KcnnBig = Kcrnn
-ToutBig = TcnnBig( Variable(Tip) ).data
-KoutBig = torch.from_numpy( KcnnBig.predict( Tip.permute(0,2,3,1).numpy() ) )
+ToutBig = TcnnBig( Variable(imgIn) ).data
+KoutBig = torch.from_numpy( KcnnBig.predict( imgIn.permute(0,2,3,1).numpy() ) )
 
 #  TcnnA = nn.Sequential( *list( list( Tcrnn.children() )[0].children() )[:7] )
 #  KcnnA = Sequential( Kcrnn.layers[:10] )
-#  ToutA = TcnnA( Variable(Tip) ).data.numpy()
-#  KoutA = KcnnA.predict( Tip.numpy() )
+#  ToutA = TcnnA( Variable(imgIn) ).data.numpy()
+#  KoutA = KcnnA.predict( imgIn.numpy() )
 
 #  TcnnB = nn.Sequential( *list( list( Tcrnn.children() )[0].children() )[7:8] )
 #  def genModel( lay ):
@@ -177,4 +181,4 @@ KoutBig = torch.from_numpy( KcnnBig.predict( Tip.permute(0,2,3,1).numpy() ) )
 #  KoutB = KcnnB.predict( KoutA )
 
 diff = KoutBig - ToutBig.permute( 1,0,2 )
-print( 'Max: ', diff.max() )
+print( 'Max difference: ', diff.max() )
