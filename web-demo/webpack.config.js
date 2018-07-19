@@ -3,10 +3,13 @@ const webpack = require('webpack');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 
 const config = {
-  entry: [
-    path.resolve(__dirname, 'js/app.js'),
-    path.resolve(__dirname, 'css/app.css'),
-  ],
+  entry: {
+    main: [
+      path.resolve(__dirname, 'js/app.js'),
+      path.resolve(__dirname, 'css/app.css'),
+    ],
+    app_tfjs: path.resolve(__dirname, 'js/app_tfjs.js'),
+  },
   resolve: { extensions: ['.js'] },
   output: {
     path: path.resolve(__dirname, 'dist'),

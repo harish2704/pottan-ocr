@@ -1,0 +1,68 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Pottan-ocr demo</title>
+  <link rel="stylesheet" href="./dist/main.bundle.css" type="text/css" media="all" />
+</head>
+<body >
+<a href="https://github.com/harish2704/pottan-ocr"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/652c5b9acfaddf3a9c326fa6bde407b87f7be0f4/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6f72616e67655f6666373630302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_orange_ff7600.png"></a>
+
+  <div class="container">
+    <div class="row">
+
+      <div class="col-md-12">
+        <h2>Instructions</h2>
+        <ol>
+          <li>This tool can only recognize a single line of text. <strong>So we have to select a single line of text from the image below</strong> </li>
+          <li>Optionally we can load a different image from pc by clicking 'Choose another image' button</li>
+          <li>Click on <strong>Run recognizer</strong> button. It will take a few second to complete the action. Result will be displayed just above the image</li>
+          <li>
+            <strong>Please note that, padding (extra white-space) in the selection will affect the output result.</strong>
+          </li>
+        </ol>
+      </div>
+      <div class="col-md-12">
+        <canvas id="dbg"></canvas>
+      </div>
+
+      <div class="col-md-12 col-md-offset-1">
+        <div class="form-group">
+          <div class="input-group input-file" >
+            <input type="text" class="form-control" placeholder='Choose a file...' />			
+            <span class="input-group-btn">
+              <button class="btn btn-primary btn-choose" type="button">Choose another image</button>
+              <button class="btn btn-success pull-right" id="run-btn">Run recognizer</button>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-12">
+        <h2>
+        <code id="output"> ---- Output ---- </code>
+        </h2>
+        <br />
+        <br />
+      </div>
+
+      <div class="col-md-12">
+        <div class="btn-group btn-group-md" id="rotate-buttons">
+          <button type="button" data-degree="-90" class="btn btn-primary">Rotate 90° anti-clockwise</button>
+          <button type="button" data-degree="-1" class="btn btn-primary">Rotate 1° anti-clockwise</button>
+          <button type="button" data-degree="1" class="btn btn-primary">Rotate 1° clockwise</button>
+          <button type="button" data-degree="90" class="btn btn-primary">Rotate 90° clockwise</button>
+        </div>
+        <br/>
+        <br/>
+      </div>
+
+      <div class="col-md-12">
+        <img id="for-cropper" class="img-thumbnail" src="./data/sample.png" alt="Selected image"/>
+      </div>
+
+    </div>
+  </div>
+  <script src="./dist/app_tfjs.bundle.js" type="text/javascript" charset="utf-8"></script>
+</body>
+</html>
