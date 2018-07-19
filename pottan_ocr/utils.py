@@ -9,6 +9,8 @@ from re import split
 FINAL_W=32
 FINAL_H=32
 
+def myOpen( fname, mode ):
+    return open( fname, mode, encoding="utf-8" )
 
 def readFile( fname ):
     opener, mode = ( gzip.open, 'rt' ) if fname[-3:] == '.gz' else ( open, 'r' )
@@ -19,19 +21,19 @@ def readLines( fname ):
     return split('[\r\n]', readFile( fname ) )
 
 def readJson( fname ):
-    with open( fname, 'r' ) as f:
+    with myOpen( fname, 'r' ) as f:
         return json.load( f )
 
 def writeFile( fname, contents ):
-    with open( fname, 'w' ) as f:
+    with myOpen( fname, 'w' ) as f:
         f.write( contents )
 
 def writeJson( fname, data ):
-    with open( fname, 'w') as outfile:
+    with myOpen( fname, 'w') as outfile:
         json.dump(data, outfile)
 
 def readYaml( fname ):
-    with open(fname, 'r') as fp:
+    with myOpen(fname, 'r') as fp:
         return yaml.load( fp )
 
 

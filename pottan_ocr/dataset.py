@@ -130,7 +130,7 @@ def getTrainingTexts( txtFile ):
 
 def normaizeImg( img ):
     img = torch.FloatTensor( img.astype('f') )
-    img = ((img*2)/255 ) -1
+    img = ( img - 127.5 ) / 127.5
     return img.unsqueeze(0)
 
 

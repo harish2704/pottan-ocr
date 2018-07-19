@@ -78,7 +78,7 @@ def main( opt ):
 if( __name__ == '__main__' ):
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--testencoding', action='store_true', help='do encodability test on each workd in the wordlist')
+    parser.add_argument('--testencoding', action='store_true', help='do encodability test on each word in the wordlist')
     parser.add_argument('--update', action='store_true', help='Update input file with valid data after testencoding')
     parser.add_argument('--skip-creation', action='store_true', help='Skip dataset creation')
     parser.add_argument('--input', help='input text file contains words')

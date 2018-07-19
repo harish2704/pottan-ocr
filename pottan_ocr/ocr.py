@@ -23,34 +23,45 @@ def loadImg( fname ):
     img = img.resize( (targetW, targetH ), Image.BILINEAR )
     return normaizeImg( np.array( img ) )
 
-def evalModel( model, img_path, current, total ):
+def evalModel( img_path, current, total ):
+    global crnnModel
     print( 'Progress %d/%d' %( current, total ), file=sys.stderr )
     image = loadImg( img_path )
-    image = image.view(1, *image.size())
+    image = image.unsqueeze(0)
     image = Variable(image)
-    preds = model(image)
+    preds = crnnModel(image)
     _, preds = preds.max(2)
     preds = preds.transpose(1, 0).contiguous().view(-1)
     preds_size = Variable(torch.IntTensor([preds.size(0)]))
     return converter.decode(preds.data, preds_size.data, raw=False)
 
+def threadInitializer( opt ):
+    global crnnModel
+    crnnModel = crnn.CRNN(32, 1, converter.totalGlyphs, opt.nh )
+    utils.loadTrainedModel( crnnModel, opt )
+    crnnModel.eval()
+
 def main( opt ):
-    model = crnn.CRNN(32, 1, converter.totalGlyphs, 256)
-    utils.loadTrainedModel( model, opt )
-    model.eval()
     totalImages = len( opt.image_paths )
-    pool = multiprocessing.Pool( multiprocessing.cpu_count() )
-    results = [ pool.apply_async( evalModel, ( model, img_path, idx, totalImages ) ) for idx, img_path in enumerate( opt.image_paths ) ]
-    #  results = [ evalModel( model, img_path, idx, totalImages ) for idx, img_path in enumerate( opt.image_paths ) ]
+    pool = multiprocessing.Pool( multiprocessing.cpu_count()-1, initializer=threadInitializer, initargs=( opt, ) )
+    results = [ pool.apply_async( evalModel, ( img_path, idx, totalImages ) ) for idx, img_path in enumerate( opt.image_paths ) ]
     for idx, result in enumerate( results ):
         img_path = opt.image_paths[ idx ]
         text = result.get()[0]
-        #  text = result[0]
         if( opt.stdout ):
             print('%s:::%s' %( img_path, [ text ] ))
         else:
             fname = '%s.txt'% splitext( img_path )[0]
             utils.writeFile( fname, text )
+
+def findNHFromFile( opt ):
+    if( opt.cuda ):
+        stateDict = torch.load(opt.crnn )
+    else:
+        stateDict = torch.load(opt.crnn, map_location={'cuda:0': 'cpu'} )
+    nh = stateDict['module.rnn.0.embedding.bias'].shape[0]
+    print( "Number of hidden layers ( --nh ) = %d" % nh )
+    return nh
 
 
 if( __name__ == '__main__' ):
@@ -60,4 +71,5 @@ if( __name__ == '__main__' ):
     parser.add_argument('--cuda', action='store_true', help='enables cuda')
     parser.add_argument('--stdout', action='store_true', help='Write output to stdout instead of saving it as <imgfile>.txt')
     opt = parser.parse_args()
+    opt.nh = findNHFromFile( opt )
     main( opt )

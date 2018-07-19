@@ -13,6 +13,9 @@ env.sh
 tmp/*
 config.yaml
 
+web-demo/dist
+web-demo/data/
+*.min.js
 
 .floydexpt
 .floydignore
