@@ -7,6 +7,14 @@ A stupid OCR for malayalam language. It can be Easily configured to process any 
 
 ## Installation
 
+#### Clone the project ( This project has git submodules. So downloading zip file may not work easily )
+```
+git clone https://github.com/harish2704/pottan-ocr
+cd pottan-ocr
+```
+
+#### Run the installer bash script to complete the installation.
+
 * For Debian
   ```bash
   env DISTRO=debian ./tools/install-dependencies.sh
