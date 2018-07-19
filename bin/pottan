@@ -72,7 +72,7 @@ EOF
 
 
 
-if [ -z $1 -o $1 == '--help' ]; then
+if [ -z $1 ] || [ $1 == '--help' ]; then
   cat<<EOF
 Usage:
 ./pottan <command> [ arguments ]
