@@ -142,11 +142,12 @@ fonts:
   - [regular, bold, italic]
 - - Dyuthi
   - [regular, bold, italic, bold italic]
+  - 15
 - - Kalyani
   - [regular, bold, italic, bold italic]
 - - Karumbi
   - [regular, bold, italic, bold italic]
-  - 15
+  - 18
 - - Keraleeyam
   - [regular, italic]
 - - Lohit Malayalam
@@ -187,5 +188,6 @@ fonts:
   - [regular, bold, italic, bold italic]
 - - Uroob
   - [regular, italic]
-imageHeight: 24
-defaultFontSize: 11
+  - 16
+imageHeight: 32
+defaultFontSize: 13

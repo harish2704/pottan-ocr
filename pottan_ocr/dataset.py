@@ -24,7 +24,7 @@ imageHeight = config['imageHeight']
 defaultFontSize = config['defaultFontSize']
 targetW = 1024
 #  let Canvas have some extra space than required so that, we can handle text overflow easly
-canvasWidth = int ( targetW*1.25 )
+canvasWidth = targetW*2
 
 
 #  Text alignment variations
@@ -48,7 +48,6 @@ totalVariations = len(fontListFlat)
 leftPaddingChoices = [
         '',
         ' ',
-        '   ',
         ]
 
 
@@ -152,7 +151,7 @@ def renderText( text, font, variation ):
         #  stats['fit'] +=1
         #  Fit-height is done by varying font size
         fontDesc = layout.get_font_description()
-        fontDesc.set_size( int(fontDesc.get_size() * 0.9 * imageHeight/ actualH ) )
+        fontDesc.set_size( int(fontDesc.get_size() * 0.85 * imageHeight/ actualH ) )
         layout.set_font_description( fontDesc )
         inkRect, _ = layout.get_pixel_extents()
         actualW = inkRect.width; actualH = inkRect.height
