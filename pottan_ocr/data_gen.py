@@ -17,7 +17,7 @@ def processInThread( i ):
 
 def threadInitializer( fname, batchSize, cache, limit  ):
     global datasetInOtherthread
-    datasetInOtherthread = TextDataset( fname, batchSize=batchSize, cache=cache, limit=limit )
+    datasetInOtherthread = TextDataset( fname, batchSize=batchSize, cache=cache, limit=limit, overwriteCache=True )
 
 
 class DataGen:
@@ -50,9 +50,16 @@ class DataGen:
 
 
 
+    def createDatasetSingleThread( self, opts ):
+        """ Used for debugging . It is hard to debug a multi-threaded application """
+        dataset = TextDataset( self.WORD_LIST_FILE, batchSize=opts.batchSize, cache=opts.output, limit=opts.count, overwriteCache=True )
+        results = [ dataset.__getitem__(i) for i in range( len( dataset )) ]
+        print( 'Total lines count=%d' % ( len( dataset )*opts.batchSize ) )
+        #  dataset.printStats()
+
     def createDataset( self, opts ):
-        dataset = TextDataset( self.WORD_LIST_FILE, batchSize=opts.batchSize, cache=opts.output, limit=opts.count)
-        pool = multiprocessing.Pool( multiprocessing.cpu_count(), initializer=threadInitializer, initargs=( self.WORD_LIST_FILE, opts.batchSize, opts.output, opts.count  ) )
+        dataset = TextDataset( self.WORD_LIST_FILE, batchSize=opts.batchSize, cache=opts.output, limit=opts.count, overwriteCache=True)
+        pool = multiprocessing.Pool( 1, initializer=threadInitializer, initargs=( self.WORD_LIST_FILE, opts.batchSize, opts.output, opts.count  ) )
         results = [ pool.apply_async( processInThread, ( i, )  ) for i in range( len( dataset )) ]
         print( 'Total lines count=%d' % ( len( dataset )*opts.batchSize ) )
         for idx, result in enumerate(results):
@@ -70,6 +77,7 @@ def main( opt ):
 
     if( not opt.skip_creation ):
         print( 'Creating dataset' )
+        #  dg.createDatasetSingleThread( opt )
         dg.createDataset( opt )
     print('Completed generating traindata for dataset\n\n' )
 

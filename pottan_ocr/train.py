@@ -16,7 +16,8 @@ from pottan_ocr import string_converter as converter
 from pottan_ocr import model as crnn
 from pottan_ocr.dataset import TextDataset
 
-IMAGE_H = 32
+imageHeight = utils.config['imageHeight']
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--traindata', required=True, help='path to dataset')
@@ -80,13 +81,13 @@ def weights_init(m):
 
 
 #  1 --> Number of channels
-crnn = crnn.CRNN(IMAGE_H, 1, nclass, opt.nh)
+crnn = crnn.CRNN( imageHeight, 1, nclass, opt.nh)
 crnn.apply(weights_init)
 if opt.crnn != '':
     utils.loadTrainedModel( crnn, opt )
 #  print(crnn)
 
-image = torch.FloatTensor(opt.batchSize, 3, IMAGE_H, IMAGE_H)
+image = torch.FloatTensor(opt.batchSize, 3,  imageHeight,  imageHeight)
 text = torch.IntTensor(opt.batchSize * 5)
 length = torch.IntTensor(opt.batchSize)
 

@@ -5,9 +5,13 @@ from torch.autograd import Variable
 import gzip
 import yaml
 from re import split
+from matplotlib import pyplot
 
-FINAL_W=32
-FINAL_H=32
+
+def showImg( im ):
+    pyplot.imshow( im )
+    pyplot.show()
+
 
 def myOpen( fname, mode ):
     return open( fname, mode, encoding="utf-8" )

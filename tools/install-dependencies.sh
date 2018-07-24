@@ -48,6 +48,7 @@ init_pkgs_debian(){
     python3-gi
     libgirepository1.0-dev
     gir1.2-pango
+    python3-gi-cairo
   )
 
   sudo apt-get update
@@ -143,6 +144,6 @@ main(){
 }
 
 
-main
+main "$@"
 
 # tar -czvf /output/war-ctc.tar.gz $warp_ctc_target; python3 ./setup.py bdist; cp dist/warpctc_pytorch-0.1.linux-x86_64.tar.gz /output/

@@ -5,7 +5,8 @@ __pycache__
 .vscode
 *.pyc
 
-misc/*
+misc/warp-ctc*
+misc/warp_ctc*
 env.sh
 *.pth
 

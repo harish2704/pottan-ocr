@@ -15,17 +15,19 @@ from pottan_ocr import utils
 from pottan_ocr import model as crnn
 from pottan_ocr.dataset import normaizeImg
 
+imageHeight = utils.config['imageHeight']
+
 def loadImg( fname ):
     img = Image.open( fname ).convert('L')
     origW, origH = img.size
-    targetH = 32
+    targetH = imageHeight
     targetW = int( origW * targetH/origH )
     img = img.resize( (targetW, targetH ), Image.BILINEAR )
     return normaizeImg( np.array( img ) )
 
 def evalModel( img_path, current, total ):
     global crnnModel
-    print( 'Progress %d/%d' %( current, total ), file=sys.stderr )
+    print( 'Progress %d/%d' % ( current, total ), file=sys.stderr )
     image = loadImg( img_path )
     image = image.unsqueeze(0)
     image = Variable(image)
@@ -37,7 +39,7 @@ def evalModel( img_path, current, total ):
 
 def threadInitializer( opt ):
     global crnnModel
-    crnnModel = crnn.CRNN(32, 1, converter.totalGlyphs, opt.nh )
+    crnnModel = crnn.CRNN( imageHeight, 1, converter.totalGlyphs, opt.nh )
     utils.loadTrainedModel( crnnModel, opt )
     crnnModel.eval()
 

@@ -5,10 +5,11 @@ from keras.models import Sequential
 from keras.layers import Dense, BatchNormalization, Activation, MaxPooling2D, TimeDistributed, Bidirectional, LSTM, Conv2D, ZeroPadding2D, Permute, Reshape
 K.set_image_data_format('channels_last')
 from pottan_ocr import string_converter as converter
+from pottan_ocr.utils import config
 
 
 
-def KerasCrnn(imgH=32, nc=1, nclass=converter.totalGlyphs, nh=64 ):
+def KerasCrnn(imgH=config.imageHeight, nc=1, nclass=converter.totalGlyphs, nh=64 ):
 
     ks = [3, 3, 3, 3, 3, 3, 2]
     ps = [1, 1, 1, 1, 1, 1, 0]

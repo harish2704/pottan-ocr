@@ -146,6 +146,7 @@ fonts:
   - [regular, bold, italic, bold italic]
 - - Karumbi
   - [regular, bold, italic, bold italic]
+  - 15
 - - Keraleeyam
   - [regular, italic]
 - - Lohit Malayalam
@@ -186,3 +187,5 @@ fonts:
   - [regular, bold, italic, bold italic]
 - - Uroob
   - [regular, italic]
+imageHeight: 24
+defaultFontSize: 11
