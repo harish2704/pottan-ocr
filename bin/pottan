@@ -9,7 +9,7 @@ export PYTHONIOENCODING=utf-8
 
 # distro independent wrapper for rename command.
 # There are two different versions of rename command exists in linux world.
-isPerRenameAvailable=$(rename -V | grep -v util-linux)
+isPerRenameAvailable=$(rename -V 2>&1 | grep -v util-linux)
 my_rename(){
   str=$1; shift
   replace=$1; shift
