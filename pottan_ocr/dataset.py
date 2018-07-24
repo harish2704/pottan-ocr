@@ -112,6 +112,9 @@ noiseSDChoices = [
         ]
 
 bgChoices=[
+        1,
+        1,
+        1,
         0.9,
         0.8,
         0.7,
@@ -189,7 +192,8 @@ def renderText( text, font, variation ):
 
     data = np.invert( data ) # becuase pango will render white text on black
     bg = choice( bgChoices )
-    data = (data*bg).astype( np.uint8 )
+    if( bg != 1 ):
+        data = (data*bg).astype( np.uint8 )
 
     # Add create a noise layer and merge with image
     ncc = choice(noiseSDChoices)
