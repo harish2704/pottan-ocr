@@ -76,9 +76,11 @@ noiseSDChoices = [
         (0,  0),
         (0, 10),
         (0, 20),
-        (0, 30),
-        (0, 35),
-        (0, 40),
+        (25, 30),
+        (40, 35),
+        (20, 25),
+        (30, 31),
+        #  (0, 40),
         #  (0, 50),
         #  (0, 60),
         #  (0, 70),
@@ -112,7 +114,6 @@ noiseSDChoices = [
         ]
 
 bgChoices=[
-        1,
         1,
         1,
         0.9,
@@ -167,7 +168,7 @@ def renderText( text, font, variation ):
             context.translate(0, imageHeight - actualH )
     elif( variation == VARIATIONS.alighn_top ):
         #  stats['top'] +=1
-        context.translate(0, -2)
+        context.translate(0, -1)
         # Random alignment means random rotation
         #  context.translate(0, imageHeight - actualH )
     elif( variation == VARIATIONS.alighn_bottom ):
@@ -273,7 +274,7 @@ class TextDataset( Sequence ):
             out = [ self.getSingleItem( i ) for i in self.randomIds[ startIndex: startIndex+self.bs ] ]
 
         #  write cache
-        if( self.cache and os.path.exists( cacheImage ) and not self.overwriteCache ):
+        if( self.cache and ( ( not os.path.exists( cacheImage ) ) or self.overwriteCache ) ):
             images, labels = zip( *out )
             images = Image.fromarray( np.concatenate( images, 0) )
             images.save( cacheImage, 'JPEG', quality=50 )
