@@ -273,7 +273,7 @@ class TextDataset( Sequence ):
             out = [ self.getSingleItem( i ) for i in self.randomIds[ startIndex: startIndex+self.bs ] ]
 
         #  write cache
-        if( self.cache and self.overwriteCache or not os.path.exists( cacheImage )):
+        if( self.cache and os.path.exists( cacheImage ) or not self.overwriteCache ):
             images, labels = zip( *out )
             images = Image.fromarray( np.concatenate( images, 0) )
             images.save( cacheImage, 'JPEG', quality=50 )
