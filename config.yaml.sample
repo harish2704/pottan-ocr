@@ -142,9 +142,9 @@ fonts:
   - [regular, bold, italic]
 - - Dyuthi
   - [regular, bold, italic, bold italic]
-  - 15
-- - Kalyani
-  - [regular, bold, italic, bold italic]
+  - 17
+# - - Kalyani
+  # - [regular, bold, italic, bold italic]
 # - - Karumbi
   # - [regular, bold, italic, bold italic]
   # - 18
@@ -164,14 +164,14 @@ fonts:
   - [regular, bold, italic, bold italic]
 - - ML-NILA03
   - [regular, bold, italic, bold italic]
-- - ML-NILA04
-  - [bold, bold italic]
+# - - ML-NILA04
+  # - [bold, bold italic]
 # - - ML-NILA05
   # - [regular, bold, italic, bold italic]
-- - ML-NILA06
-  - [ bold, bold italic ]
-- - ML-NILA07
-  - [regular, bold, italic, bold italic]
+# - - ML-NILA06
+  # - [ bold, bold italic ]
+# - - ML-NILA07
+  # - [regular, bold, italic, bold italic]
 - - Noto Sans Malayalam
   - [regular, bold, italic, bold italic]
 - - Noto Sans Malayalam UI
@@ -182,12 +182,12 @@ fonts:
   - [regular, bold, italic, bold italic]
 - - RaghuMalayalam
   - [regular, bold, italic, bold italic]
-- - Samyak Malayalam
-  - [regular, bold, italic, bold italic]
-- - Suruma
-  - [regular, bold, italic, bold italic]
-- - Uroob
-  - [regular, italic]
-  - 16
+# - - Samyak Malayalam
+  # - [regular, bold, italic, bold italic]
+# - - Suruma
+  # - [regular, bold, italic, bold italic]
+# - - Uroob
+  # - [regular, italic]
+  # - 16
 imageHeight: 32
-defaultFontSize: 13
+defaultFontSize: 14
