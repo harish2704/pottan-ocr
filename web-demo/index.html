@@ -38,9 +38,40 @@
       <div class="col-md-12">
         <h2>
         <code id="output"> ---- Output ---- </code>
+        <code id="output-raw"> ---- Raw Output ---- </code>
         </h2>
         <br />
         <br />
+      </div>
+      <div id="dbg">
+
+        <div class="layer-outputs-container" v-if="!modelLoading">
+          <div class="bg-line"></div>
+          <div
+               v-for="(layerOutput, layerIndex) in layerOutputImages"
+               :key="`intermediate-output-${layerIndex}`"
+               class="layer-output"
+               >
+               <div class="layer-output-heading">
+                 <span class="layer-class">{{ layerOutput.layerClass }}</span>
+               </div>
+               <div class="layer-output-canvas-container">
+                 <canvas v-for="(image, index) in layerOutput.images"
+                         :key="`intermediate-output-${layerIndex}-${index}`"
+                         :id="`intermediate-output-${layerIndex}-${index}`"
+                         :width="image.width"
+                         :height="image.height"
+                         style="display:none;"
+                         ></canvas>
+                 <canvas v-for="(image, index) in layerOutput.images"
+                         :key="`intermediate-output-${layerIndex}-${index}-scaled`"
+                         :id="`intermediate-output-${layerIndex}-${index}-scaled`"
+                         :width="scalingFactor[layerIndex] * image.width"
+                         :height="scalingFactor[layerIndex] * image.height"
+                         ></canvas>
+               </div>
+          </div>
+        </div>
       </div>
 
       <div class="col-md-12">
@@ -61,6 +92,7 @@
     </div>
   </div>
   <script src="./js/keras.min.js" type="text/javascript" charset="utf-8"></script>
+  <script src="./js/vue.js" type="text/javascript" charset="utf-8"></script>
   <script src="./dist/main.bundle.js" type="text/javascript" charset="utf-8"></script>
 </body>
 </html>

@@ -6,10 +6,13 @@
 var jquery = require('jquery');
 var ndarray = require('ndarray');
 var ndarrayOps = require('ndarray-ops');
+var ndarrayUnpack = require('ndarray-unpack');
 require('cropper');
 var glyphsList = require('../data/glyphs.json');
+var tensorUtils = require('./tensor');
 glyphsList.unshift('');
 var $=jquery;
+var _ = require('lodash');
 var  range = a=> Array.from( new Uint32Array(a) ).map((v,i) => i );
 var IMG_WIDTH = 1024;
 var IMG_HEIGHT = 32;
@@ -17,15 +20,106 @@ var IMG_HEIGHT = 32;
 Object.assign( window, {
   ndarray,
   ndarrayOps,
+  ndarrayUnpack,
+  _l: _,
 });
 
+function initVue(){
+  var app = new Vue({
+    el: '#dbg',
+    data: {
+      modelLoading: false,
+      layerOutputImages: [],
+      scalingFactor: [
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      12,
+      12,
+      12,
+      12,
+      ],
+    },
+		methods:{
+			updateDbg: function updateDbg( model ){
+				const outputs = []
+				model.modelLayersMap.forEach((layer, name) => {
+					if (name === 'input') return;
+					let images = []
+					if (layer.hasOutput && layer.output && layer.output.tensor.shape.length === 3) {
+						images = tensorUtils.unroll3Dtensor(layer.output.tensor)
+					} else if (layer.hasOutput && layer.output && layer.output.tensor.shape.length === 2) {
+						images = [tensorUtils.image2Dtensor(layer.output.tensor)]
+					} else if (layer.hasOutput && layer.output && layer.output.tensor.shape.length === 1) {
+						images = [tensorUtils.image1Dtensor(layer.output.tensor)]
+					}
+					outputs.push({ layerClass: layer.layerClass || '', name, images })
+				})
+				this.layerOutputImages = outputs
+				setTimeout(() => {
+					this.showIntermediateOutputs()
+				}, 0)
+			},
+
+			showIntermediateOutputs: function showIntermediateOutputs() {
+				this.layerOutputImages.forEach((output, layerNum) => {
+					const scalingFactor = this.scalingFactor[layerNum]
+					output.images.forEach((image, imageNum) => {
+						const ctx = document.getElementById(`intermediate-output-${layerNum}-${imageNum}`).getContext('2d')
+						ctx.putImageData(image, 0, 0)
+						const ctxScaled = document
+							.getElementById(`intermediate-output-${layerNum}-${imageNum}-scaled`)
+							.getContext('2d')
+						ctxScaled.save()
+            ctxScaled.webkitImageSmoothingEnabled = false;
+            ctxScaled.mozImageSmoothingEnabled = false;
+            ctxScaled.imageSmoothingEnabled = false;
+						ctxScaled.scale(scalingFactor, scalingFactor)
+						ctxScaled.clearRect(0, 0, ctxScaled.canvas.width, ctxScaled.canvas.height)
+						ctxScaled.drawImage(document.getElementById(`intermediate-output-${layerNum}-${imageNum}`), 0, 0)
+						ctxScaled.restore()
+					})
+				})
+			},
+		}
+
+  })
+  window.app = app;
+}
+
+
 $(function() {
+
+  initVue();
+
   if( !KerasJS.GPU_SUPPORT ){
     alert('Sorry. WebGL 2 support not found. \nExiting...');
     $('.container').hide();
   }
   var img = $('#for-cropper');
   var output = $('#output');
+  var outputRaw = $('#output-raw');
   var tmpScaleCanvas = document.createElement('canvas');
   tmpScaleCanvas.width = 2048;
   tmpScaleCanvas.height = IMG_HEIGHT;
@@ -67,8 +161,9 @@ $(function() {
     var model = new KerasJS.Model({
       filepath: './data/pottan.bin',
       gpu: true,
-      transferLayerOutputs: !true
+      transferLayerOutputs: true,
     });
+  window.mm = model;
 
     model.events.on('loadingProgress',function( i ){
       console.log('loadingProgress', i );
@@ -107,6 +202,7 @@ $(function() {
     ndarrayOps.assigns( input, 1 );
     ndarrayOps.assign( input.hi( null, data.shape[1] ), data );
 
+
     model.predict({ input: input.data }).then(outputData => {
       var nClasses = glyphsList.length;
       var nPredictions = outputData.output.length/nClasses;
@@ -114,6 +210,8 @@ $(function() {
       var predictions = range(nPredictions).map( i => ndarrayOps.argmax( outputData.pick(i,null))[0] );
       var out = decodeStr( predictions );
       output.text( out );
+      outputRaw.text( JSON.stringify( predictions ) );
+      app.updateDbg( model );
     });
   });
 });

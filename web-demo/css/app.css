@@ -2,3 +2,13 @@
 @charset "UTF-8";
 @import "../node_modules/bootstrap/dist/css/bootstrap.css";
 @import "../node_modules/cropper/dist/cropper.css";
+
+.layer-outputs-container canvas {
+  position: relative;
+  display: block;
+  justify-content: flex-end;
+  margin: 0px 0 0px 30px;
+  border-width: 0px 5px 0px 5px;
+  border-style: solid;
+  border-color: red;
+}
