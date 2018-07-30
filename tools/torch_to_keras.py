@@ -18,7 +18,7 @@ from pottan_ocr import string_converter as converter
 from pottan_ocr import utils
 
 TEST_IMG = '/home/hari/tmp/ocr-related/keras-js/demos/data/test2.jpg'
-TRAINED_TORCH_MODEL =  '/home/hari/Downloads/netCRNN_01-19-06-09-54_3.pth'
+TRAINED_TORCH_MODEL =  '/home/hari/tmp/ocr-related/trained_models/netCRNN_07-25-04-45-02_0.pth'
 
 """
 Variable naming:
@@ -32,7 +32,7 @@ dictToObj = lambda x: namedtuple('Struct', x.keys() )( *x.values() )
 opt = dictToObj({
     'crnn': TRAINED_TORCH_MODEL,
     'cuda': False,
-    'nh': 64
+    'nh': 32
     })
 
 

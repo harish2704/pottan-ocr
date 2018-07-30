@@ -28,8 +28,8 @@ datagen(){
 }
 
 train(){
-  python3 -m pottan_ocr.train "$@"
-  # ipython3 --matplotlib=tk train.py -- "$@"
+  # python3 -m pottan_ocr.train "$@"
+  ipython3 --matplotlib=tk  -m pottan_ocr.train -- "$@"
 }
 
 extractWikiDump(){
@@ -48,17 +48,22 @@ EOF
   exit 0;
   fi
 
-  rm -rf tmp/*
+  if [[ -z $NO_CLEAN ]]; then
+    rm -rf tmp/*
+  fi
   shift 2
   baseName=$(basename "$fullPath")
   withoutExt="${baseName%.*}"
   workingCopy="./tmp/$baseName"
   linesDir="./tmp/$withoutExt"
-  mkdir -p ./tmp
-  cp "$fullPath" "$workingCopy"
-  cp "$fullPath" "./tmp/$withoutExt.nrm.png"
-  python ./ocropy/ocropus-gpageseg "$workingCopy" -n --gray -p 1 
-  rm "$linesDir"/*bin.png; my_rename nrm.png bin.png "$linesDir"/*nrm.png
+
+  if [[ -z $NO_CLEAN ]]; then
+    mkdir -p ./tmp
+    cp "$fullPath" "$workingCopy"
+    cp "$fullPath" "./tmp/$withoutExt.nrm.png"
+    python ./ocropy/ocropus-gpageseg "$workingCopy" -n --gray -p 1
+    rm "$linesDir"/*bin.png; my_rename nrm.png bin.png "$linesDir"/*nrm.png
+  fi
   python3  -m pottan_ocr.ocr --crnn "$crnnPath"  "$linesDir"/*bin.png "$@"
   my_rename bin.txt txt "$linesDir"/*.txt
   python ./ocropy/ocropus-hocr "$workingCopy" -o ./tmp/out.html

@@ -23,7 +23,8 @@ def loadImg( fname ):
     targetH = imageHeight
     targetW = int( origW * targetH/origH )
     img = img.resize( (targetW, targetH ), Image.BILINEAR )
-    return normaizeImg( np.array( img ) )
+    img = np.array( img )
+    return normaizeImg( img  )
 
 def evalModel( img_path, current, total ):
     global crnnModel

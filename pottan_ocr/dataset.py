@@ -2,9 +2,6 @@
 
 from .utils import config, readLines, writeFile, showImg
 
-import torch
-from torch.utils.data import Dataset
-
 import os
 import math
 from enum import Enum
@@ -215,16 +212,17 @@ def getTrainingTexts( txtFile ):
 
 
 def normaizeImg( img ):
-    img = torch.FloatTensor( img.astype('f') )
+    img = img.astype('f')
     img = ( img - 127.5 ) / 127.5
-    return img.unsqueeze(0)
+    img = np.expand_dims( img, 2 )
+    return img
 
 
 def normalizeBatch( batch ):
     images, labels = zip(*batch)
     images = [ normaizeImg(image) for image in images]
-    images = torch.stack( images )
-    return images, labels
+    images = np.stack( images )
+    return images, np.array( labels )
 
 
 

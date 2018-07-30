@@ -9,7 +9,7 @@ from pottan_ocr.utils import config
 
 
 
-def KerasCrnn(imgH=config.imageHeight, nc=1, nclass=converter.totalGlyphs, nh=64 ):
+def KerasCrnn(imgH=config['imageHeight'], nc=1, nclass=converter.totalGlyphs, nh=64 ):
 
     ks = [3, 3, 3, 3, 3, 3, 2]
     ps = [1, 1, 1, 1, 1, 1, 0]
@@ -24,7 +24,7 @@ def KerasCrnn(imgH=config.imageHeight, nc=1, nclass=converter.totalGlyphs, nh=64
         padding = 'same' if ps[i] else 'valid'
 
         if( i == 0):
-            cnn.add( Conv2D( nOut, ks[i], strides=ss[i], input_shape=( 32, None, 1 ), padding=padding, name='conv{0}'.format(i) ) )
+            cnn.add( Conv2D( nOut, ks[i], strides=ss[i], input_shape=( 32, 1024, 1 ), padding=padding, name='conv{0}'.format(i) ) )
         else:
             cnn.add( Conv2D( nOut, ks[i], strides=ss[i], padding=padding, name='conv{0}'.format(i) ) )
         if batchNormalization:
@@ -46,9 +46,9 @@ def KerasCrnn(imgH=config.imageHeight, nc=1, nclass=converter.totalGlyphs, nh=64
     convRelu(6, True )  # 512x1x16
 
     cnn.add(Reshape((-1, 512)))
-    cnn.add(Bidirectional( LSTM(64 , return_sequences=True, use_bias=True, recurrent_activation='sigmoid', )) )
-    cnn.add( TimeDistributed( Dense(64) ) )
-    cnn.add(Bidirectional( LSTM(64 , return_sequences=True, use_bias=True, recurrent_activation='sigmoid', )) )
+    cnn.add(Bidirectional( LSTM( nh , return_sequences=True, use_bias=True, recurrent_activation='sigmoid', )) )
+    cnn.add( TimeDistributed( Dense( nh) ) )
+    cnn.add(Bidirectional( LSTM( nh , return_sequences=True, use_bias=True, recurrent_activation='sigmoid', )) )
     cnn.add( TimeDistributed(Dense( nclass ) ) )
 
     cnn.compile(loss=keras.losses.categorical_crossentropy, optimizer=keras.optimizers.Adadelta())
