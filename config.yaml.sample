@@ -189,5 +189,5 @@ fonts:
 # - - Uroob
   # - [regular, italic]
   # - 16
-imageHeight: 32
 defaultFontSize: 14
+trainImageWidth: 1024

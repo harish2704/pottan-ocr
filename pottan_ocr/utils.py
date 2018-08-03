@@ -42,6 +42,7 @@ def readYaml( fname ):
 
 
 config = readYaml('./config.yaml')
+config['imageHeight'] = 32
 
 
 class averager(object):

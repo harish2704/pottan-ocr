@@ -19,7 +19,7 @@ from gi.repository import Pango, PangoCairo
 
 imageHeight = config['imageHeight']
 defaultFontSize = config['defaultFontSize']
-targetW = 1024
+targetW = config['trainImageWidth']
 #  let Canvas have some extra space than required so that, we can handle text overflow easly
 canvasWidth = targetW*2
 
@@ -211,16 +211,16 @@ def getTrainingTexts( txtFile ):
     return list(set( lines ))
 
 
-def normaizeImg( img ):
+def normaizeImg( img, channel_axis=0 ):
     img = img.astype('f')
     img = ( img - 127.5 ) / 127.5
-    img = np.expand_dims( img, 2 )
+    img = np.expand_dims( img, channel_axis )
     return img
 
 
-def normalizeBatch( batch ):
+def normalizeBatch( batch, channel_axis=0 ):
     images, labels = zip(*batch)
-    images = [ normaizeImg(image) for image in images]
+    images = [ normaizeImg( image, channel_axis ) for image in images]
     images = np.stack( images )
     return images, np.array( labels )
 
@@ -228,7 +228,7 @@ def normalizeBatch( batch ):
 
 class TextDataset( Sequence ):
 
-    def __init__( self, txtFile, limit=None, num_workers=2, cache=None, batchSize=32, overwriteCache=False ):
+    def __init__( self, txtFile, limit=None, cache=None, batchSize=32, overwriteCache=False ):
         self.txtFile = txtFile
         self.lines = getTrainingTexts( txtFile )
         self.bs = batchSize
@@ -257,6 +257,10 @@ class TextDataset( Sequence ):
         return ( img, label)
 
     def __getitem__( self, batchIndex ):
+        unNormalized =  self.getUnNormalized( batchIndex )
+        return normalizeBatch( unNormalized )
+
+    def getUnNormalized( self, batchIndex ):
         if( batchIndex >= self.batchCount ):
             raise StopIteration
 
@@ -277,7 +281,7 @@ class TextDataset( Sequence ):
             images = Image.fromarray( np.concatenate( images, 0) )
             images.save( cacheImage, 'JPEG', quality=50 )
             writeFile( cacheLabels, '\n'.join( labels ) )
-        return normalizeBatch( out )
+        return out
 
     def printStats( self ):
         print( stats )

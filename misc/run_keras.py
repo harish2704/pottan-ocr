@@ -26,43 +26,72 @@ parser.add_argument('--adadelta', action='store_true', help='Whether to use adad
 opt = parser.parse_args()
 print(opt)
 
-if len( sys.argv ) > 1 and sys.argv[1] == '--use-plaidml':
-    import plaidml.keras
-    plaidml.keras.install_backend()
 
 from misc import keras_model
 from keras.optimizers import SGD
-from keras import backend as K
+from keras.layers import Input, Lambda
+from keras import backend as K, Model
+from keras.utils import Sequence
+from pottan_ocr.utils import config
 from pottan_ocr import string_converter as converter
-from pottan_ocr.dataset import TextDataset
+from pottan_ocr.dataset import TextDataset, normalizeBatch
+import numpy as np
 
+targetW = config['trainImageWidth']
+targetH = config['imageHeight']
 batchSize = opt.batchSize
 m = keras_model.KerasCrnn()
 
 m.summary()
+outputSize = m.layers[-1].output.shape[1].value
 
 sgd = SGD(lr=0.02, decay=1e-6, momentum=0.9, nesterov=True, clipnorm=5)
 
-def ctc_lambda_func( y_true, y_pred ):
-    #  import ipdb; ipdb.set_trace()
-    if y_true.shape[0].value:
-        import ipdb; ipdb.set_trace()
-        y_true_encoded, y_true_len  = converter.encode( y_true )
-        y_pred_len = [y_pred.shape[1].value] * batchSize
-        return K.ctc_batch_cost( y_true_encoded, y_pred, y_pred_len, y_true_len )
-    return y_pred
+class DataGenerator( Sequence ):
+    def __init__( self, txtFile, **kwargs):
+        self.ds = TextDataset( txtFile, **kwargs )
+
+    def __len__(self):
+        return self.ds.__len__()
+
+    def __getitem__( self, batchIndex ):
+        unNormalized =  self.ds.getUnNormalized( batchIndex )
+        images, labels = normalizeBatch( unNormalized, channel_axis=2 )
+        labels, label_lengths  = converter.encodeStrListRaw( labels, outputSize )
+        input_lengths = [ outputSize ] * batchSize
+        inputs = {
+                'the_images': images,
+                'the_labels': np.array( labels ),
+                'label_lengths': np.array( label_lengths ),
+                'input_lengths': np.array( input_lengths ),
+                }
+        outputs = {'ctc': np.zeros([ batchSize ])}  # dummy data for dummy loss function
+        return (inputs, outputs)
+
+def ctc_lambda_func( args ):
+    labels, y_pred, y_pred_len, label_lengths = args
+    return K.ctc_batch_cost( labels, y_pred, y_pred_len, label_lengths )
+
+labels = Input(name='the_labels', shape=[ outputSize ], dtype='int16')
+images = Input(name='the_images', shape=[ targetH, targetW, 1 ], dtype='float32')
+label_lengths = Input(name='label_lengths', shape=[1], dtype='int16')
+y_pred_len = Input(name='input_lengths', shape=[1], dtype='int16')
+
+y_pred = m( images )
+loss_out = Lambda(ctc_lambda_func, output_shape=(1,), name='ctc')( [ labels, y_pred, y_pred_len, label_lengths ])
+mm = Model( inputs=[ images, labels, label_lengths, y_pred_len ], outputs=loss_out )
+mm.summary()
+
+mm.compile(loss={'ctc': lambda y_true, y_pred: y_pred}, optimizer=sgd)
 
 
-m.compile(loss=ctc_lambda_func, optimizer=sgd)
-
-train_loader = TextDataset( opt.traindata, batchSize=opt.batchSize, limit=opt.traindata_limit, cache=opt.traindata_cache )
-test_loader = TextDataset( opt.valdata, batchSize=opt.batchSize, limit=opt.valdata_limit, cache=opt.valdata_cache )
-import ipdb; ipdb.set_trace()
+train_loader = DataGenerator( opt.traindata, batchSize=opt.batchSize, limit=opt.traindata_limit, cache=opt.traindata_cache )
+test_loader = DataGenerator( opt.valdata, batchSize=opt.batchSize, limit=opt.valdata_limit, cache=opt.valdata_cache )
 print( "\n\n Valdata len: %d" % len( test_loader ))
 
-m.fit_generator(generator=train_loader[0],
-                    steps_per_epoch=3,
-                    epochs=2,
-                    validation_data=test_loader[0],
-                    validation_steps=2,
+mm.fit_generator(generator=train_loader,
+                    steps_per_epoch=int(opt.traindata_limit/batchSize),
+                    epochs=opt.niter,
+                    validation_data=test_loader,
+                    validation_steps=int(opt.traindata_limit/batchSize),
                     initial_epoch=0)

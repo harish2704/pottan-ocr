@@ -165,7 +165,10 @@ def val(net, criterion, max_iter=10):
 def trainBatch( data ):
     print('Training start')
     cpu_images, cpu_texts = data
+    cpu_images = torch.from_numpy( cpu_images )
+    #  cpu_texts = torch.from_numpy( cpu_texts )
 
+    import ipdb; ipdb.set_trace()
     batchSize = cpu_images.size(0)
     txts, lengths = converter.encode(cpu_texts)
 
@@ -178,7 +181,6 @@ def trainBatch( data ):
 
     preds = crnn(image)
     preds_size = Variable(torch.IntTensor( [preds.size(0)] * preds.size(1) ))
-    import ipdb; ipdb.set_trace()
     cost = criterion(preds, text, preds_size, length) / batchSize
     crnn.zero_grad()
     cost.backward()

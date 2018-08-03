@@ -20,6 +20,16 @@ def encodeStr( word ):
     out = [ glyphList.index( g ) for g in  glyphs ]
     return out, len( out )
 
+def encodeStrListRaw( lines, maxWidth ):
+    out = []
+    lengths = []
+    for i in lines:
+        encoded, length = encodeStr( i )
+        encoded.extend( [0]* ( maxWidth - length ) )
+        out.append( encoded )
+        lengths.append( length )
+    return out, lengths
+
 def encodeStrList( items ):
     txt, l = list( zip( *[ encodeStr(i) for i in items ] ) )
     return IntTensor( sum(txt, []) ), IntTensor( l )
