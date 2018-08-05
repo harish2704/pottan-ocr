@@ -17,8 +17,8 @@ from misc.keras_model import KerasCrnn as KCRNN
 from pottan_ocr import string_converter as converter
 from pottan_ocr import utils
 
-TEST_IMG = '/home/hari/tmp/ocr-related/keras-js/demos/data/test2.jpg'
-TRAINED_TORCH_MODEL =  '/home/hari/tmp/ocr-related/trained_models/netCRNN_07-25-04-45-02_0.pth'
+TEST_IMG = '/home/hari/tmp/ocr-related/test2.jpg'
+TRAINED_TORCH_MODEL =  '/home/hari/tmp/ocr-related/trained_models/netCRNN_01-19-06-09-54_3.pth'
 
 """
 Variable naming:
@@ -32,7 +32,7 @@ dictToObj = lambda x: namedtuple('Struct', x.keys() )( *x.values() )
 opt = dictToObj({
     'crnn': TRAINED_TORCH_MODEL,
     'cuda': False,
-    'nh': 32
+    'nh': 64
     })
 
 
@@ -125,7 +125,7 @@ print( 'State transfer completed...\n Verifying Keras model')
 
 from pottan_ocr.ocr import loadImg
 from pottan_ocr import utils
-imgIn = loadImg( TEST_IMG ).unsqueeze(0)
+imgIn = torch.from_numpy( loadImg( TEST_IMG ) ).unsqueeze(0)
 
 allTmods =[ [ i, name ] for name,i in Tcrnn.named_modules() if len(list( i.modules() )) == 1 ]
 cnnTmods =allTmods[:21]

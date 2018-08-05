@@ -24,7 +24,7 @@ def KerasCrnn(imgH=config['imageHeight'], nc=1, nclass=converter.totalGlyphs, nh
         padding = 'same' if ps[i] else 'valid'
 
         if( i == 0):
-            cnn.add( Conv2D( nOut, ks[i], strides=ss[i], input_shape=( 32, 1024, 1 ), padding=padding, name='conv{0}'.format(i) ) )
+            cnn.add( Conv2D( nOut, ks[i], strides=ss[i], input_shape=( 32, None, 1 ), padding=padding, name='conv{0}'.format(i) ) )
         else:
             cnn.add( Conv2D( nOut, ks[i], strides=ss[i], padding=padding, name='conv{0}'.format(i) ) )
         if batchNormalization:

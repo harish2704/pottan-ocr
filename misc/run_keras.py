@@ -28,24 +28,37 @@ print(opt)
 
 
 from misc import keras_model
-from keras.optimizers import SGD
+from keras.optimizers import SGD, RMSprop
 from keras.layers import Input, Lambda
 from keras import backend as K, Model
 from keras.utils import Sequence
-from pottan_ocr.utils import config
+from pottan_ocr.utils import config, readJson
 from pottan_ocr import string_converter as converter
 from pottan_ocr.dataset import TextDataset, normalizeBatch
 import numpy as np
+from keras.utils import plot_model
+from os import environ
+
+if 'DEBUG' in environ:
+    from tensorflow.python import debug as tf_debug
+    sess = K.get_session()
+    sess = tf_debug.LocalCLIDebugWrapperSession(sess)
+    K.set_session(sess)
 
 targetW = config['trainImageWidth']
 targetH = config['imageHeight']
 batchSize = opt.batchSize
 m = keras_model.KerasCrnn()
 
-m.summary()
+plot_model(m, to_file='model.png', show_shapes=True)
+#  m.summary()
 outputSize = m.layers[-1].output.shape[1].value
+MG = '/home/hari/tmp/ocr-related/keras-js/demos/data/test2.jpg'
+TRAINED_TORCH_MODEL =  '/home/hari/tmp/ocr-related/trained_models/netCRNN_07-25-04-45-02_0.pth'
 
-sgd = SGD(lr=0.02, decay=1e-6, momentum=0.9, nesterov=True, clipnorm=5)
+
+#  sgd = SGD(lr=0.02, decay=1e-6, momentum=0.9, nesterov=True, clipnorm=5)
+sgd = RMSprop( lr=0.005, epsilon=K.epsilon() )
 
 class DataGenerator( Sequence ):
     def __init__( self, txtFile, **kwargs):
@@ -57,8 +70,9 @@ class DataGenerator( Sequence ):
     def __getitem__( self, batchIndex ):
         unNormalized =  self.ds.getUnNormalized( batchIndex )
         images, labels = normalizeBatch( unNormalized, channel_axis=2 )
-        labels, label_lengths  = converter.encodeStrListRaw( labels, outputSize )
-        input_lengths = [ outputSize ] * batchSize
+        labels, label_lengths  = converter.encodeStrListRaw( labels, 85 )
+        #  print( labels )
+        input_lengths = [ 85 ] * batchSize
         inputs = {
                 'the_images': images,
                 'the_labels': np.array( labels ),
@@ -69,25 +83,24 @@ class DataGenerator( Sequence ):
         return (inputs, outputs)
 
 def ctc_lambda_func( args ):
-    labels, y_pred, y_pred_len, label_lengths = args
-    return K.ctc_batch_cost( labels, y_pred, y_pred_len, label_lengths )
+    y_pred, labels, y_pred_len, label_lengths = args
+    return K.ctc_batch_cost( labels, K.softmax( y_pred ), y_pred_len, label_lengths )
 
-labels = Input(name='the_labels', shape=[ outputSize ], dtype='int16')
+labels = Input(name='the_labels', shape=[ 85 ], dtype='int32')
 images = Input(name='the_images', shape=[ targetH, targetW, 1 ], dtype='float32')
-label_lengths = Input(name='label_lengths', shape=[1], dtype='int16')
-y_pred_len = Input(name='input_lengths', shape=[1], dtype='int16')
+label_lengths = Input(name='label_lengths', shape=[1], dtype='int32')
+y_pred_len = Input(name='input_lengths', shape=[1], dtype='int32')
 
 y_pred = m( images )
-loss_out = Lambda(ctc_lambda_func, output_shape=(1,), name='ctc')( [ labels, y_pred, y_pred_len, label_lengths ])
+loss_out = Lambda(ctc_lambda_func, output_shape=(1,), name='ctc')( [ y_pred, labels, y_pred_len, label_lengths ])
 mm = Model( inputs=[ images, labels, label_lengths, y_pred_len ], outputs=loss_out )
-mm.summary()
+plot_model(mm, to_file='model2.png', show_shapes=True)
 
 mm.compile(loss={'ctc': lambda y_true, y_pred: y_pred}, optimizer=sgd)
 
 
 train_loader = DataGenerator( opt.traindata, batchSize=opt.batchSize, limit=opt.traindata_limit, cache=opt.traindata_cache )
 test_loader = DataGenerator( opt.valdata, batchSize=opt.batchSize, limit=opt.valdata_limit, cache=opt.valdata_cache )
-print( "\n\n Valdata len: %d" % len( test_loader ))
 
 mm.fit_generator(generator=train_loader,
                     steps_per_epoch=int(opt.traindata_limit/batchSize),
@@ -95,3 +108,22 @@ mm.fit_generator(generator=train_loader,
                     validation_data=test_loader,
                     validation_steps=int(opt.traindata_limit/batchSize),
                     initial_epoch=0)
+
+#  def toArr( x ):
+    #  return K.variable( np.array( x ))
+
+#  sampleStr= readJson('/home/hari/tmp/ocr-related/pred_test/str.txt')
+#  yP = np.load('/home/hari/tmp/ocr-related/pred_test/pred.npz')
+#  yT, yTLen = converter.encodeStrListRaw( [ sampleStr ] , 81 )
+
+#  yT = toArr( yT )
+#  yTLen = toArr( [ yTLen ] )
+#  yP = toArr( yP )
+#  yPLen = toArr( [ [ yP.shape[1].value ] ] )
+
+
+
+#  for i in ( yT, yP, yPLen, yTLen ):
+    #  print( i.shape )
+#  yP = K.softmax( yP )
+#  cost = K.eval( K.ctc_batch_cost( yT, yP, yPLen, yTLen ) )

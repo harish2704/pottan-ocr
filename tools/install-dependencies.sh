@@ -102,8 +102,8 @@ init_python(){
   pip2  install --user -r $this_dir/../ocropy/requirements.txt
 
   # Install pytorch as described in https://pytorch.org/
-  py_minor_ver=$(python3 --version | sed 's/Python 3\.\(.\).*/\1/g')
-  pip3 install http://download.pytorch.org/whl/cpu/torch-0.4.0-cp3${py_minor_ver}-cp3${py_minor_ver}m-linux_$(arch).whl
+  # py_minor_ver=$(python3 --version | sed 's/Python 3\.\(.\).*/\1/g')
+  # pip3 install http://download.pytorch.org/whl/cpu/torch-0.4.0-cp3${py_minor_ver}-cp3${py_minor_ver}m-linux_$(arch).whl
 }
 
 
