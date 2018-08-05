@@ -58,7 +58,8 @@ TRAINED_TORCH_MODEL =  '/home/hari/tmp/ocr-related/trained_models/netCRNN_07-25-
 
 
 #  sgd = SGD(lr=0.02, decay=1e-6, momentum=0.9, nesterov=True, clipnorm=5)
-sgd = RMSprop( lr=0.005, epsilon=K.epsilon() )
+sgd = RMSprop( lr=0.001, epsilon=K.epsilon() )
+labelWidth = 95
 
 class DataGenerator( Sequence ):
     def __init__( self, txtFile, **kwargs):
@@ -70,9 +71,9 @@ class DataGenerator( Sequence ):
     def __getitem__( self, batchIndex ):
         unNormalized =  self.ds.getUnNormalized( batchIndex )
         images, labels = normalizeBatch( unNormalized, channel_axis=2 )
-        labels, label_lengths  = converter.encodeStrListRaw( labels, 85 )
+        labels, label_lengths  = converter.encodeStrListRaw( labels, labelWidth )
         #  print( labels )
-        input_lengths = [ 85 ] * batchSize
+        input_lengths = [ labelWidth ] * batchSize
         inputs = {
                 'the_images': images,
                 'the_labels': np.array( labels ),
@@ -86,7 +87,7 @@ def ctc_lambda_func( args ):
     y_pred, labels, y_pred_len, label_lengths = args
     return K.ctc_batch_cost( labels, K.softmax( y_pred ), y_pred_len, label_lengths )
 
-labels = Input(name='the_labels', shape=[ 85 ], dtype='int32')
+labels = Input(name='the_labels', shape=[ labelWidth ], dtype='int32')
 images = Input(name='the_images', shape=[ targetH, targetW, 1 ], dtype='float32')
 label_lengths = Input(name='label_lengths', shape=[1], dtype='int32')
 y_pred_len = Input(name='input_lengths', shape=[1], dtype='int32')
