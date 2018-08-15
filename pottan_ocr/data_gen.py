@@ -59,7 +59,7 @@ class DataGen:
 
     def createDataset( self, opts ):
         dataset = TextDataset( self.WORD_LIST_FILE, batchSize=opts.batchSize, cache=opts.output, limit=opts.count, overwriteCache=True)
-        pool = multiprocessing.Pool( 1, initializer=threadInitializer, initargs=( self.WORD_LIST_FILE, opts.batchSize, opts.output, opts.count  ) )
+        pool = multiprocessing.Pool( os.cpu_count(), initializer=threadInitializer, initargs=( self.WORD_LIST_FILE, opts.batchSize, opts.output, opts.count  ) )
         results = [ pool.apply_async( processInThread, ( i, )  ) for i in range( len( dataset )) ]
         print( 'Total lines count=%d' % ( len( dataset )*opts.batchSize ) )
         for idx, result in enumerate(results):

@@ -5,7 +5,7 @@ import numpy as np
 import gzip
 import yaml
 from re import split
-from matplotlib import pyplot
+#  from matplotlib import pyplot
 
 
 def showImg( im ):

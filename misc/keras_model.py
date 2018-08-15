@@ -51,7 +51,6 @@ def KerasCrnn(imgH=config['imageHeight'], nc=1, nclass=converter.totalGlyphs, nh
     cnn.add(Bidirectional( LSTM( nh , return_sequences=True, use_bias=True, recurrent_activation='sigmoid', )) )
     cnn.add( TimeDistributed(Dense( nclass ) ) )
 
-    cnn.compile(loss=keras.losses.categorical_crossentropy, optimizer=keras.optimizers.Adadelta())
     return cnn
 
 
