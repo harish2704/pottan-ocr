@@ -5,7 +5,7 @@
 A stupid OCR for malayalam language. It can be Easily configured to process any other languages with complex scripts
 
 ## Demo
-http://harish2704.github.io/pottan-demo/
+https://harish2704.github.io/pottan-demo/
 
 ## Installation
 
