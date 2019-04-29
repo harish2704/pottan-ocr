@@ -86,6 +86,7 @@ The currently, models are trained on [Floydhub][floyd_hub_page]. Following detai
 * raw text data used and generate synthetic images used for training
 * logs , timing & progress of each training sessions.
 
+For more details, see [wiki](https://github.com/harish2704/pottan-ocr/wiki/How-to-train-pottan-for-another-language)
 
 ## Getting involved
 * Join public Gitter chat room ( See badge on the top ) or Public Matrix chat room `#pottan-ocr:matrix.org` ( https://riot.im/app/#/room/#pottan-ocr:matrix.org ).
