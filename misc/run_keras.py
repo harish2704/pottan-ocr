@@ -97,7 +97,7 @@ loss_out = Lambda(ctc_lambda_func, output_shape=(1,), name='ctc')( [ y_pred, lab
 mm = Model( inputs=[ images, labels, label_lengths, y_pred_len ], outputs=loss_out )
 plot_model(mm, to_file='model2.png', show_shapes=True)
 
-mm.compile(loss={'ctc': lambda y_true, y_pred: y_pred}, optimizer=sgd)
+mm.compile(loss={'ctc': lambda y_true, y_pred: y_pred}, optimizer=sgd,  metrics=['accuracy'])
 
 
 train_loader = DataGenerator( opt.traindata, batchSize=opt.batchSize, limit=opt.traindata_limit, cache=opt.traindata_cache )
