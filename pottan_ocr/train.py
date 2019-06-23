@@ -9,7 +9,7 @@ import torch
 import torch.optim as optim
 from torch.autograd import Variable
 import numpy as np
-from warpctc_pytorch import CTCLoss
+from torch.nn import CTCLoss
 
 from pottan_ocr import utils
 from pottan_ocr import string_converter as converter
@@ -143,7 +143,7 @@ def val(net, criterion, max_iter=10):
 
         preds = crnn(image)
         preds_size = Variable(torch.IntTensor( [preds.size(0)] * preds.size(1) ))
-        cost = criterion(preds, text, preds_size, length) / batchSize
+        cost = criterion(preds, text, preds_size, length)
         loss_avg.add(cost)
 
         _, preds = preds.max(2)
@@ -177,7 +177,7 @@ def trainBatch( data ):
 
     preds = crnn(image)
     preds_size = Variable(torch.IntTensor( [preds.size(0)] * preds.size(1) ))
-    cost = criterion(preds, text, preds_size, length) / batchSize
+    cost = criterion(preds, text, preds_size, length)
     crnn.zero_grad()
     cost.backward()
     optimizer.step()
