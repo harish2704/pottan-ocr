@@ -99,7 +99,7 @@ test_loader = DataGenerator( opt.valdata, batchSize=opt.batchSize, limit=opt.val
 class WeightsSaver(Callback):
     def on_epoch_end(self, epoch, logs={}):
         name = opt.outfile
-        m.save( name )
+        backBone.save( name )
         print( 'Saved "%s"' % name )
 
 model_saver = WeightsSaver()
