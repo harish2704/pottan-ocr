@@ -76,15 +76,12 @@ List of available commands ( See '--help' of individual command for more details
 
 ## Training
 
-* For training, we need to install `warp-ctc` and it's pytorch bindings. See `./tools/install-dependencies.sh` for the detailed installation steps
 * Training is done using synthetic images generated on the fly using text corpus. For this to work, we should have enough fonts installed in the system. In short, fonts listed in the `./config.yaml.sample` should be available in the output of command `fc-list :lang=ml`
   - It is also possible to write the generated images to disk. sub-command `datagen` does exactly this. When running training, if the images already found to exists in the cache directory( eg: point cache directory to generated images directory ), it will be used for the training instead of generating new images. This idea is used to reduce CPU load during production training sessions
 * Also it is recommended to have a GPU for training the OCR.
 
-The currently, models are trained on [Floydhub][floyd_hub_page]. Following details are available there
-* Exact command-line options
-* raw text data used and generate synthetic images used for training
-* logs , timing & progress of each training sessions.
+### Try training on Google colab
+[Open notebook](https://colab.research.google.com/github/harish2704/pottan-ocr/blob/keras-training/misc/pottan_ocr.ipynb)
 
 For more details, see [wiki](https://github.com/harish2704/pottan-ocr/wiki/How-to-train-pottan-for-another-language)
 
