@@ -31,7 +31,7 @@ def encodeStrListRaw( lines, maxWidth ):
         encoded, length = encodeStr( i )
         encoded.extend( [ totalGlyphs - 1 ]* ( maxWidth - length ) )
         out.append( encoded )
-        lengths.append( length )
+        lengths.append( maxWidth )
     return out, lengths
 
 def encodeStrList( items ):

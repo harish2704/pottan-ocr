@@ -7,14 +7,15 @@ K.set_image_data_format('channels_last')
 from pottan_ocr import string_converter as converter
 from pottan_ocr.utils import config
 
+LAST_CNN_SIZE=256
 
 
-def KerasCrnn(imgH=config['imageHeight'], nc=1, nclass=converter.totalGlyphs, nh=64 ):
+def KerasCrnn(imgH=config['imageHeight'], nc=1, nclass=converter.totalGlyphs, nh=32 ):
 
-    ks = [3, 3, 3, 3, 3, 3, 2]
-    ps = [1, 1, 1, 1, 1, 1, 0]
-    ss = [1, 1, 1, 1, 1, 1, 1]
-    nm = [64, 128, 256, 256, 512, 512, 512]
+    ks = [3, 3, 3, 3, 3, 3 ]
+    ps = [1, 1, 1, 1, 1, 1 ]
+    ss = [1, 1, 1, 1, 1, 1 ]
+    nm = [16, 32, 64, 128, 256, LAST_CNN_SIZE ]
 
     cnn = Sequential()
 
@@ -24,7 +25,7 @@ def KerasCrnn(imgH=config['imageHeight'], nc=1, nclass=converter.totalGlyphs, nh
         padding = 'same' if ps[i] else 'valid'
 
         if( i == 0):
-            cnn.add( Conv2D( nOut, ks[i], strides=ss[i], input_shape=( 32, None, 1 ), padding=padding, name='conv{0}'.format(i) ) )
+            cnn.add( Conv2D( nOut, ks[i], strides=ss[i], input_shape=( imgH, None, 1 ), padding=padding, name='conv{0}'.format(i) ) )
         else:
             cnn.add( Conv2D( nOut, ks[i], strides=ss[i], padding=padding, name='conv{0}'.format(i) ) )
         if batchNormalization:
@@ -43,9 +44,8 @@ def KerasCrnn(imgH=config['imageHeight'], nc=1, nclass=converter.totalGlyphs, nh
     convRelu(5)
     cnn.add( ZeroPadding2D( padding=(0,1) ))
     cnn.add( MaxPooling2D( pool_size=(2, 2), strides=(2, 1), padding='valid', name='pooling{0}'.format(3) ) )  # 512x2x16
-    convRelu(6, True )  # 512x1x16
 
-    cnn.add(Reshape((-1, 512)))
+    cnn.add(Reshape((-1, LAST_CNN_SIZE )))
     cnn.add(Bidirectional( LSTM( nh , return_sequences=True, use_bias=True, recurrent_activation='sigmoid', )) )
     cnn.add( TimeDistributed( Dense( nh) ) )
     cnn.add(Bidirectional( LSTM( nh , return_sequences=True, use_bias=True, recurrent_activation='sigmoid', )) )

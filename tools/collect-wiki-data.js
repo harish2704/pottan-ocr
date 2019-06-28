@@ -8,6 +8,7 @@ var fs = require('fs');
 var crypto = require('crypto');
 var Transform = require('stream').Transform;
 var infile = process.argv[2];
+var WIDTH = 70
 
 var symbolsTobeIncluded = [
 ' ',
@@ -113,11 +114,11 @@ parser._transform = function(data, encoding, done) {
     // if( word === ''){ debugger; }
 
     
-    if( ( sentance.length + word.length ) > 80 ){
+    if( ( sentance.length + word.length ) > WIDTH ){
       this.push( sentance + '\n' );
 
       // if this is a single long word. Ignore it
-      sentance = word.length > 80 ?  '' : word ;
+      sentance = word.length > WIDTH ?  '' : word ;
     } else if(word){
       sentance = sentance + ' ' + word
     }
