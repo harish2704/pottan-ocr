@@ -158,6 +158,6 @@ fonts:
   - [regular, bold, italic, bold italic]
 - - Uroob
   - [regular, italic]
-imageHeight: 20
-defaultFontSize: 11
+imageHeight: 24
+defaultFontSize: 12
 trainImageWidth: 1024
