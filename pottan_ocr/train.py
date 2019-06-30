@@ -21,7 +21,7 @@ print(opt)
 import keras
 from keras import models
 from keras.callbacks import Callback
-from misc import keras_model
+from pottan_ocr.model import KerasCrnn
 from keras.optimizers import RMSprop, Adadelta
 from keras.layers import Input, Lambda
 from keras import backend as K, Model
@@ -38,7 +38,7 @@ labelWidth = 120
 targetW = config['trainImageWidth']
 targetH = config['imageHeight']
 batchSize = opt.batchSize
-backBone = keras_model.KerasCrnn( nh=opt.nh )
+backBone = KerasCrnn( nh=opt.nh )
 
 
 if( opt.crnn ):
@@ -96,8 +96,8 @@ fullModel.compile(loss={'ctc': lambda y_true, y_pred: y_pred}, optimizer=optimiz
 train_loader = DataGenerator( opt.traindata, batchSize=opt.batchSize, limit=opt.traindata_limit, cache=opt.traindata_cache )
 test_loader = DataGenerator( opt.valdata, batchSize=opt.batchSize, limit=opt.valdata_limit, cache=opt.valdata_cache )
 
-import pdb; pdb.set_trace();
-import IPython as x; x.embed()
+#  import pdb; pdb.set_trace();
+#  import IPython as x; x.embed()
 
 class WeightsSaver(Callback):
     def on_epoch_end(self, epoch, logs={}):
