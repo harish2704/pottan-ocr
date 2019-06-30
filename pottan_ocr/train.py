@@ -40,6 +40,7 @@ targetH = config['imageHeight']
 batchSize = opt.batchSize
 backBone = keras_model.KerasCrnn( nh=opt.nh )
 
+
 if( opt.crnn ):
     backBone.load_weights( opt.crnn )
     print( 'Loaded "%s"' % opt.crnn )
@@ -94,8 +95,9 @@ fullModel.compile(loss={'ctc': lambda y_true, y_pred: y_pred}, optimizer=optimiz
 
 train_loader = DataGenerator( opt.traindata, batchSize=opt.batchSize, limit=opt.traindata_limit, cache=opt.traindata_cache )
 test_loader = DataGenerator( opt.valdata, batchSize=opt.batchSize, limit=opt.valdata_limit, cache=opt.valdata_cache )
-#  import pdb; pdb.set_trace();
-#  import IPython as x; x.embed()
+
+import pdb; pdb.set_trace();
+import IPython as x; x.embed()
 
 class WeightsSaver(Callback):
     def on_epoch_end(self, epoch, logs={}):
@@ -104,7 +106,7 @@ class WeightsSaver(Callback):
         print( 'Saved "%s"' % name )
 
 from keras.callbacks import  TensorBoard
-tb = TensorBoard( update_freq='batch', histogram_freq=64, write_grads=not True, write_images=True, )
+tenbordlogs = TensorBoard( update_freq='batch' )
 
 model_saver = WeightsSaver()
 fullModel.fit_generator(generator=train_loader,
@@ -112,4 +114,4 @@ fullModel.fit_generator(generator=train_loader,
                     epochs=opt.niter,
                     validation_data=test_loader,
                     validation_steps=int(opt.valdata_limit/batchSize),
-                    initial_epoch=0, callbacks=[ model_saver, tb ])
+                    initial_epoch=0, callbacks=[ model_saver, tenbordlogs ])
