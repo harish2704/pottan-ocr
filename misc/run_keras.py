@@ -19,6 +19,7 @@ opt = parser.parse_args()
 print(opt)
 
 import keras
+from keras import models
 from keras.callbacks import Callback
 from misc import keras_model
 from keras.optimizers import RMSprop, Adadelta
@@ -102,10 +103,13 @@ class WeightsSaver(Callback):
         backBone.save( name )
         print( 'Saved "%s"' % name )
 
+from keras.callbacks import  TensorBoard
+tb = TensorBoard( update_freq='batch', histogram_freq=64, write_grads=not True, write_images=True, )
+
 model_saver = WeightsSaver()
 fullModel.fit_generator(generator=train_loader,
                     steps_per_epoch=int(opt.traindata_limit/batchSize),
                     epochs=opt.niter,
                     validation_data=test_loader,
                     validation_steps=int(opt.valdata_limit/batchSize),
-                    initial_epoch=0, callbacks=[ model_saver ])
+                    initial_epoch=0, callbacks=[ model_saver, tb ])
