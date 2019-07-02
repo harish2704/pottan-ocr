@@ -12,7 +12,7 @@ glyphSearchRe =  '|'.join( [ re.escape(i) for i in glyphList ] )
 glyphSearchRe = re.compile( '(%s)' % glyphSearchRe)
 
 # Empty string stands for blank
-glyphList.insert(0, '')
+glyphList.append('')
 totalGlyphs = len( glyphList )
 
 def encodeStr( word ):

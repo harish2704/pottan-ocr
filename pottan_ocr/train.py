@@ -67,7 +67,7 @@ nclass = converter.totalGlyphs
 print('Number of char class = %d' % nclass )
 
 
-criterion = CTCLoss()
+criterion = CTCLoss( blank=nclass-1 )
 
 
 # custom weights initialization called on crnn
