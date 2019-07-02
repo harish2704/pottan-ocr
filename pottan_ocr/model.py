@@ -47,9 +47,9 @@ def KerasCrnn(imgH=config['imageHeight'], nc=1, nclass=converter.totalGlyphs, nh
     cnn.add( MaxPooling2D( pool_size=(2, 2), strides=(2, 1), padding='valid', name='pooling{0}'.format(3) ) )  # 512x2x16
 
     cnn.add(Reshape((-1, LAST_CNN_SIZE )))
-    cnn.add(Bidirectional( GRU( nh , return_sequences=True, use_bias=True, recurrent_activation='sigmoid', )) )
+    cnn.add(Bidirectional( LSTM( nh , return_sequences=True, use_bias=True, recurrent_activation='sigmoid', )) )
     cnn.add( TimeDistributed( Dense( nh) ) )
-    cnn.add(Bidirectional( GRU( nh , return_sequences=True, use_bias=True, recurrent_activation='sigmoid', )) )
+    cnn.add(Bidirectional( LSTM( nh , return_sequences=True, use_bias=True, recurrent_activation='sigmoid', )) )
     cnn.add( TimeDistributed(Dense( nclass ) ) )
 
     return cnn

@@ -15,6 +15,7 @@ parser.add_argument('--lr', type=float, default=0.01, help='learning rate for Cr
 parser.add_argument('--crnn', help="path to crnn (to continue training)")
 parser.add_argument('--outfile', default='./crnn.h5', help='Where to store samples and models')
 parser.add_argument('--adadelta', action='store_true', help='Whether to use adadelta (default is rmsprop)')
+parser.add_argument('--adam', action='store_true', help='Whether to use adam (default is rmsprop)')
 opt = parser.parse_args()
 print(opt)
 
@@ -22,7 +23,7 @@ import keras
 from keras import models
 from keras.callbacks import Callback
 from pottan_ocr.model import KerasCrnn
-from keras.optimizers import RMSprop, Adadelta
+from keras.optimizers import RMSprop, Adadelta, Adam
 from keras.layers import Input, Lambda
 from keras import backend as K, Model
 from keras.utils import Sequence
@@ -46,12 +47,13 @@ if( opt.crnn ):
     print( 'Loaded "%s"' % opt.crnn )
 
 #  plot_model(m, to_file='model.png', show_shapes=True)
-backBone.summary()
 outputSize = backBone.layers[-1].output.shape[1].value
 
 
 if( opt.adadelta ):
     optimizer = Adadelta()
+elif( opt.adam ):
+    optimizer = Adam( lr=opt.lr  )
 else:
     optimizer = RMSprop( lr=opt.lr, epsilon=K.epsilon() )
 

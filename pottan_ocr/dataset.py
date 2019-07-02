@@ -34,8 +34,6 @@ for fnt, styles, *customFontSize in fontList:
         fontSize = defaultFontSize if len( customFontSize ) == 0 else customFontSize[0]
         fontDescStr = '%s %s %s' %( fnt, style, fontSize )
         fontListFlat.append([ fontDescStr, VARIATIONS.random, ])
-        fontListFlat.append([ fontDescStr, VARIATIONS.random, ])
-        fontListFlat.append([ fontDescStr, VARIATIONS.random, ])
         fontListFlat.append([ fontDescStr, VARIATIONS.alighn_top, ])
         fontListFlat.append([ fontDescStr,  VARIATIONS.alighn_bottom ])
         fontListFlat.append([ fontDescStr,  VARIATIONS.fit_height ])
@@ -143,7 +141,7 @@ def renderText( text, font, variation ):
     else:
         fontDesc = fontDescCache[font] = Pango.font_description_from_string( font )
     layout.set_font_description(Pango.FontDescription( font ))
-    layout.set_markup( '<span>' +  text +'</span>', -1 );
+    layout.set_text( text , -1 );
 
     inkRect, _ = layout.get_pixel_extents()
     actualW = inkRect.width; actualH = inkRect.height
@@ -179,7 +177,7 @@ def renderText( text, font, variation ):
     data = surface.get_data()
     #  import ipdb; ipdb.set_trace()
 
-    if( actualW > targetW ):
+    if(  (actualW > targetW ) or ( actualW < targetW * 0.7 )):
         #  print(' actualW > targetW ')
         #  Resize image by shrinking the width of image
         data = np.frombuffer(data, dtype=np.uint8).reshape(( imageHeight, canvasWidth ))[:, :actualW + 10]

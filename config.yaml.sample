@@ -138,14 +138,19 @@ glyphs:
 fonts:
 - - AnjaliOldLipi
   - [regular, bold]
+  - 10
 - - Chilanka
   - [regular, bold, italic]
+  - 9
 - - Keraleeyam
   - [regular, italic]
+  - 12
 - - Lohit Malayalam
   - [regular, bold, italic, bold italic]
+  - 10
 - - Manjari
   - [regular, bold, italic, bold italic]
+  - 10
 - - Meera
   - [regular, bold, italic, bold italic]
 - - Rachana
@@ -154,10 +159,13 @@ fonts:
   - [regular, bold, italic, bold italic]
 - - Samyak Malayalam
   - [regular, bold, italic, bold italic]
+  - 9
 - - Suruma
   - [regular, bold, italic, bold italic]
-- - Uroob
-  - [regular, italic]
+  - 10
+# - - Uroob
+  # - [ regular, italic]
+  # - 12
 imageHeight: 24
-defaultFontSize: 12
-trainImageWidth: 1024
+defaultFontSize: 11
+trainImageWidth: 800
