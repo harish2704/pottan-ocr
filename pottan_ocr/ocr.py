@@ -18,7 +18,7 @@ from pottan_ocr.dataset import normaizeImg
 from pottan_ocr.string_converter import decodeStr
 from pottan_ocr import utils
 
-imageHeight = config['imageHeight']
+imageHeight = config['imageHeight'] - 3
 
 def loadImg( fname ):
     img = Image.open( fname ).convert('L')
@@ -34,7 +34,7 @@ def main( opt ):
     totalImages = len( opt.image_paths )
     images = [ loadImg( i ) for i in opt.image_paths ]
     maxWidth = max([i.shape[1] for i in images ])
-    images = [ np.pad( i, [(0, 0), (0, maxWidth - i.shape[1] ), (0,0)], mode='constant', constant_values=1) for i in images ]
+    images = [ np.pad( i, [(1, 2), (0, maxWidth - i.shape[1] ), (0,0)], mode='constant', constant_values=1) for i in images ]
     images = np.array( images )
     out = model.predict( images )
     out = out.argmax(2)
