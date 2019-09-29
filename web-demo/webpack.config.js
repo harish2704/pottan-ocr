@@ -4,7 +4,7 @@ const ExtractTextPlugin = require('extract-text-webpack-plugin');
 
 const config = {
   entry: [
-    path.resolve(__dirname, 'js/app.js'),
+    path.resolve(__dirname, 'js/app.pottan-tfjs.js'),
     path.resolve(__dirname, 'css/app.css'),
   ],
   resolve: { extensions: ['.js'] },
@@ -20,7 +20,13 @@ const config = {
         use: {
           loader: 'babel-loader',
           options: {
-            presets: ['babel-preset-env']
+            presets: [[
+              '@babel/preset-env', {
+                targets: {
+                  chrome: "77",
+                },
+              }
+            ]]
           }
         }
       },

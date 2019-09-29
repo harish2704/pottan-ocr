@@ -23,14 +23,24 @@
         </ol>
       </div>
 
-      <div class="col-md-12 col-md-offset-1">
-        <div class="form-group">
-          <div class="input-group input-file" >
-            <input type="text" class="form-control" placeholder='Choose a file...' />			
-            <span class="input-group-btn">
-              <button class="btn btn-primary btn-choose" type="button">Choose another image</button>
-              <button class="btn btn-success pull-right" id="run-btn">Run recognizer</button>
-            </span>
+      <div class="col-md-12 row">
+        <div class="col-md-8">
+          <div class="form-group">
+            <div class="input-group input-file" >
+              <input type="text" class="form-control" placeholder='Choose a file...' />			
+              <span class="input-group-btn">
+                <button class="btn btn-primary btn-choose" type="button">Choose another image</button>
+                <button class="btn btn-success pull-right" id="run-btn">Run recognizer</button>
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="checkbox">
+            <label><input type="checkbox" id="cb_backend" checked >Use GPU</label>
+          </div>
+          <div class="checkbox">
+            <label><input type="checkbox" id="cb_debug" >Debug</label>
           </div>
         </div>
       </div>
@@ -60,7 +70,6 @@
 
     </div>
   </div>
-  <script src="./js/keras.min.js" type="text/javascript" charset="utf-8"></script>
   <script src="./dist/main.bundle.js" type="text/javascript" charset="utf-8"></script>
 </body>
 </html>
