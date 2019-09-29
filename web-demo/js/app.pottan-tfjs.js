@@ -70,6 +70,16 @@ $(function() {
 
   tf.loadLayersModel( './tfjs_kcrnn/model.json').then( model =>{
     window.model = model;
+
+    // This is hack to trace outputs of each layer after execution
+    model.layers.forEach(function( l ){
+      l.__orig_call = l.call;
+      l.call = function( inputs, args ){
+        var out = this.__orig_call( inputs, args );
+        this.__hari_lastout = tf.keep( out.clone() );
+        return out;
+      }
+    });
   })
 
   initUi();
@@ -86,11 +96,11 @@ $(function() {
     // pick any one of the color channel. ( Here it is Green )
     data = data.gather([0], [2])
     data = tf.image.resizeBilinear( data, [ IMG_HEIGHT, newWidth ] );
-    tf.browser.toPixels( data, $('#dbg')[0]);
 
     // Normalize the values . Fit between -1 & 1
     data = data.sub( 127.5 );
     data = data.div( 127.5 );
+
 
     var outputData = model.predict( data.expandDims() );
     var predictions = outputData.argMax(2).squeeze();
