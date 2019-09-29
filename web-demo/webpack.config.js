@@ -50,6 +50,11 @@ if (process.env.NODE_ENV === 'production') {
     new webpack.optimize.ModuleConcatenationPlugin(),
     new ExtractTextPlugin({ filename: '[name].bundle.css', disable: false }),
   ];
+  config.externals = {
+    'jquery': 'jQuery',
+    '@tensorflow/tfjs': 'tf',
+    '@tensorflow/tfjs-vis': 'tfvis'
+  };
 } else {
   config.devtool = 'eval';
   config.plugins = [

@@ -6,28 +6,28 @@
 var jquery = require('jquery');
 var glyphsList = require('../data/glyphs.json');
 var tf = require('@tensorflow/tfjs');
-var tfvis = require('@tensorflow/tfjs-vis');
+
 window.tf = tf;
-window.tfvis = tfvis;
+window.$ = jquery;
+
 glyphsList.unshift('');
-var $=jquery;
-window.$ = $;
 var IMG_HEIGHT = 32;
 
 require('cropper');
 
-// tf.setBackend( 'cpu' );
-// tf.enableDebugMode ()
 tf.enableProdMode ()
 
 
 $(function() {
   var img = $('#for-cropper');
   var output = $('#output');
-  var imgCropper = img.cropper();
+  var imgCropper = img.cropper().data('cropper');
   var debugCheckbox = $('#cb_debug');
 
   function initUi() {
+    img.on('ready', function(){
+      imgCropper.setCropBoxData({left: 208.5, top: 49, width: 211, height: 41});
+    });
 
     $('#cb_backend').on('change', function( ev ){
       tf.setBackend( event.target.checked ? 'webgl' :'cpu' );
@@ -40,7 +40,7 @@ $(function() {
           element.attr("name",$(this).attr("name"));
           element.change(function( e ){
             var imgUrl = URL.createObjectURL(e.target.files[0]);
-            imgCropper.data('cropper').replace( imgUrl );
+            imgCropper.replace( imgUrl );
             element.next(element).find('input').val((element.val()).split('\\').pop());
           });
           $(this).find("button.btn-choose").click(function(){
@@ -57,7 +57,7 @@ $(function() {
     );
 
     $('#rotate-buttons > button').click(function(){
-      imgCropper.data('cropper').rotate( $(this).data().degree )
+      imgCropper.rotate( $(this).data().degree )
     });
   }
 
@@ -77,7 +77,7 @@ $(function() {
     if( !imgCropper ){
       return ;
     }
-    var croppedCanvas = imgCropper.data('cropper').getCroppedCanvas();
+    var croppedCanvas = imgCropper.getCroppedCanvas();
     var scaleFactor = IMG_HEIGHT/croppedCanvas.height;
     var origWidth = croppedCanvas.width,
       newWidth = parseInt( scaleFactor * origWidth );
@@ -104,6 +104,8 @@ $(function() {
 });
 
 async function renderLayerOutputs( model ){
+  var tfvis = require('@tensorflow/tfjs-vis');
+  window.tfvis = tfvis;
   console.log(`Total num layers: ${model.layers.length}`);
   for (var i = 0; i < 28 ; i ++) {
     var layer = model.layers[i];
