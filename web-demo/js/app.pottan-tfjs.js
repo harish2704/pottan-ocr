@@ -68,18 +68,18 @@ $(function() {
     }).join('');
   }
 
-  tf.loadLayersModel( './tfjs_kcrnn/model.json').then( model =>{
+  tf.loadGraphModel('ctpn-json/model.json').then( model =>{
     window.model = model;
 
     // This is hack to trace outputs of each layer after execution
-    model.layers.forEach(function( l ){
-      l.__orig_call = l.call;
-      l.call = function( inputs, args ){
-        var out = this.__orig_call( inputs, args );
-        this.__hari_lastout = tf.keep( out.clone() );
-        return out;
-      }
-    });
+    // model.layers.forEach(function( l ){
+      // l.__orig_call = l.call;
+      // l.call = function( inputs, args ){
+        // var out = this.__orig_call( inputs, args );
+        // this.__hari_lastout = tf.keep( out.clone() );
+        // return out;
+      // }
+    // });
   })
 
   initUi();
@@ -94,22 +94,26 @@ $(function() {
     var data = tf.browser.fromPixels( croppedCanvas );
 
     // pick any one of the color channel. ( Here it is Green )
-    data = data.gather([0], [2])
-    data = tf.image.resizeBilinear( data, [ IMG_HEIGHT, newWidth ] );
+    // data = data.gather([0], [2])
+    // data = tf.image.resizeBilinear( data, [ IMG_HEIGHT, newWidth ] );
 
     // Normalize the values . Fit between -1 & 1
     data = data.sub( 127.5 );
     data = data.div( 127.5 );
 
-
-    var outputData = model.predict( data.expandDims() );
-    var predictions = outputData.argMax(2).squeeze();
+    var start = new Date();
+    var outputData = model.executeAsync( data.expandDims() )
+      .then( function( out ){
+        var x = out;
+        alert( 'Completed model executeAsync: ' + ( new Date() - start ) );
+      });
+    // var predictions = outputData.argMax(2).squeeze();
     // tf.print( predictions,1 );
-    var out = decodeStr( Array.from( predictions.dataSync()) );
-    output.text( out );
-    if( debugCheckbox.prop("checked") ){
-      renderLayerOutputs( model );
-    }
+    // var out = decodeStr( Array.from( predictions.dataSync()) );
+    // output.text( out );
+    // if( debugCheckbox.prop("checked") ){
+      // renderLayerOutputs( model );
+    // }
   });
 });
 

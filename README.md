@@ -72,6 +72,11 @@ List of available commands ( See '--help' of individual command for more details
     ocr             - Run charector recognition with a pre-trained model and image file
 ```
 
+## OCR usage
+
+```
+./bin/pottan ocr <trained_model.h5> <iamge_path> [ pottan_ocr_output.html ]
+```
 
 
 ## Training
