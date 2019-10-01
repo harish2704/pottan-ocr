@@ -1,11 +1,11 @@
-import torch
+#  import torch
 import json
 import numpy as np
-from torch.autograd import Variable
+#  from torch.autograd import Variable
 import gzip
 import yaml
 from re import split
-from matplotlib import pyplot
+#  from matplotlib import pyplot
 
 
 def showImg( im ):

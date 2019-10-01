@@ -2,9 +2,6 @@
 
 from .utils import config, readLines, writeFile, showImg
 
-import torch
-from torch.utils.data import Dataset
-
 import os
 import math
 from enum import Enum
@@ -22,9 +19,9 @@ from gi.repository import Pango, PangoCairo
 
 imageHeight = config['imageHeight']
 defaultFontSize = config['defaultFontSize']
-targetW = 1024
+targetW = config['trainImageWidth']
 #  let Canvas have some extra space than required so that, we can handle text overflow easly
-canvasWidth = int ( targetW*1.25 )
+canvasWidth = targetW*2
 
 
 #  Text alignment variations
@@ -37,8 +34,6 @@ for fnt, styles, *customFontSize in fontList:
         fontSize = defaultFontSize if len( customFontSize ) == 0 else customFontSize[0]
         fontDescStr = '%s %s %s' %( fnt, style, fontSize )
         fontListFlat.append([ fontDescStr, VARIATIONS.random, ])
-        fontListFlat.append([ fontDescStr, VARIATIONS.random, ])
-        fontListFlat.append([ fontDescStr, VARIATIONS.random, ])
         fontListFlat.append([ fontDescStr, VARIATIONS.alighn_top, ])
         fontListFlat.append([ fontDescStr,  VARIATIONS.alighn_bottom ])
         fontListFlat.append([ fontDescStr,  VARIATIONS.fit_height ])
@@ -48,7 +43,6 @@ totalVariations = len(fontListFlat)
 leftPaddingChoices = [
         '',
         ' ',
-        '   ',
         ]
 
 
@@ -77,22 +71,24 @@ noiseSDChoices = [
         (0,  0),
         (0, 10),
         (0, 20),
-        (0, 30),
-        (0, 35),
-        (0, 40),
-        (0, 50),
+        (25, 30),
+        (40, 35),
+        (20, 25),
+        (30, 31),
+        #  (0, 40),
+        #  (0, 50),
         #  (0, 60),
         #  (0, 70),
         #  (0, 80),
         #  (0, 90),
         #  (0,100),
-        (0,   0),
+        #  (0,   0),
         #  (10, 30),
         #  (20, 30),
         #  (30, 30),
         #  (30, 35),
         #  (40, 30),
-        (50, 30),
+        #  (50, 30),
         #  (60, 30),
         #  (70, 30),
         #  (80, 30),
@@ -113,6 +109,8 @@ noiseSDChoices = [
         ]
 
 bgChoices=[
+        1,
+        1,
         0.9,
         0.8,
         0.7,
@@ -143,7 +141,7 @@ def renderText( text, font, variation ):
     else:
         fontDesc = fontDescCache[font] = Pango.font_description_from_string( font )
     layout.set_font_description(Pango.FontDescription( font ))
-    layout.set_markup( '<span>' +  text +'</span>', -1 );
+    layout.set_text( text , -1 );
 
     inkRect, _ = layout.get_pixel_extents()
     actualW = inkRect.width; actualH = inkRect.height
@@ -152,7 +150,7 @@ def renderText( text, font, variation ):
         #  stats['fit'] +=1
         #  Fit-height is done by varying font size
         fontDesc = layout.get_font_description()
-        fontDesc.set_size( int(fontDesc.get_size() * 0.9 * imageHeight/ actualH ) )
+        fontDesc.set_size( int(fontDesc.get_size() * 0.85 * imageHeight/ actualH ) )
         layout.set_font_description( fontDesc )
         inkRect, _ = layout.get_pixel_extents()
         actualW = inkRect.width; actualH = inkRect.height
@@ -165,7 +163,7 @@ def renderText( text, font, variation ):
             context.translate(0, imageHeight - actualH )
     elif( variation == VARIATIONS.alighn_top ):
         #  stats['top'] +=1
-        context.translate(0, -2)
+        context.translate(0, -1)
         # Random alignment means random rotation
         #  context.translate(0, imageHeight - actualH )
     elif( variation == VARIATIONS.alighn_bottom ):
@@ -179,7 +177,7 @@ def renderText( text, font, variation ):
     data = surface.get_data()
     #  import ipdb; ipdb.set_trace()
 
-    if( actualW > targetW ):
+    if(  (actualW > targetW ) or ( actualW < targetW * 0.7 )):
         #  print(' actualW > targetW ')
         #  Resize image by shrinking the width of image
         data = np.frombuffer(data, dtype=np.uint8).reshape(( imageHeight, canvasWidth ))[:, :actualW + 10]
@@ -190,7 +188,8 @@ def renderText( text, font, variation ):
 
     data = np.invert( data ) # becuase pango will render white text on black
     bg = choice( bgChoices )
-    data = (data*bg).astype( np.uint8 )
+    if( bg != 1 ):
+        data = (data*bg).astype( np.uint8 )
 
     # Add create a noise layer and merge with image
     ncc = choice(noiseSDChoices)
@@ -210,23 +209,24 @@ def getTrainingTexts( txtFile ):
     return list(set( lines ))
 
 
-def normaizeImg( img ):
-    img = torch.FloatTensor( img.astype('f') )
+def normaizeImg( img, channel_axis=0 ):
+    img = img.astype('f')
     img = ( img - 127.5 ) / 127.5
-    return img.unsqueeze(0)
+    img = np.expand_dims( img, channel_axis )
+    return img
 
 
-def normalizeBatch( batch ):
+def normalizeBatch( batch, channel_axis=0 ):
     images, labels = zip(*batch)
-    images = [ normaizeImg(image) for image in images]
-    images = torch.stack( images )
-    return images, labels
+    images = [ normaizeImg( image, channel_axis ) for image in images]
+    images = np.stack( images )
+    return images, np.array( labels )
 
 
 
 class TextDataset( Sequence ):
 
-    def __init__( self, txtFile, limit=None, num_workers=2, cache=None, batchSize=32, overwriteCache=False ):
+    def __init__( self, txtFile, limit=None, cache=None, batchSize=32, overwriteCache=False ):
         self.txtFile = txtFile
         self.lines = getTrainingTexts( txtFile )
         self.bs = batchSize
@@ -255,6 +255,10 @@ class TextDataset( Sequence ):
         return ( img, label)
 
     def __getitem__( self, batchIndex ):
+        unNormalized =  self.getUnNormalized( batchIndex )
+        return normalizeBatch( unNormalized )
+
+    def getUnNormalized( self, batchIndex ):
         if( batchIndex >= self.batchCount ):
             raise StopIteration
 
@@ -270,12 +274,12 @@ class TextDataset( Sequence ):
             out = [ self.getSingleItem( i ) for i in self.randomIds[ startIndex: startIndex+self.bs ] ]
 
         #  write cache
-        if( self.cache and self.overwriteCache or not os.path.exists( cacheImage )):
+        if( self.cache and ( ( not os.path.exists( cacheImage ) ) or self.overwriteCache ) ):
             images, labels = zip( *out )
             images = Image.fromarray( np.concatenate( images, 0) )
             images.save( cacheImage, 'JPEG', quality=50 )
             writeFile( cacheLabels, '\n'.join( labels ) )
-        return normalizeBatch( out )
+        return out
 
     def printStats( self ):
         print( stats )

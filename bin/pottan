@@ -7,19 +7,6 @@ export PYTHONPATH+=:$thisDir/../
 export PYTHONIOENCODING=utf-8
 
 
-# distro independent wrapper for rename command.
-# There are two different versions of rename command exists in linux world.
-isPerRenameAvailable=$(rename -V | grep -v util-linux)
-my_rename(){
-  str=$1; shift
-  replace=$1; shift
-
-  if [[ -n $isPerRenameAvailable ]]; then
-    rename -f "s/$str/$replace/" $@
-  else
-    rename $str $replace $@
-  fi
-}
 
 datagen(){
   # ./gen-glyph-list.js
@@ -27,10 +14,12 @@ datagen(){
   # ipython3 --matplotlib=tk ./data_gen.py
 }
 
+
 train(){
-  python3 -m pottan_ocr.train "$@"
-  # ipython3 --matplotlib=tk train.py -- "$@"
+  # python3 -m pottan_ocr.train "$@"
+  ipython3 --matplotlib=tk  -m pottan_ocr.train -- "$@"
 }
+
 
 extractWikiDump(){
   node ./collect-wiki-data.js "$@"
@@ -38,38 +27,42 @@ extractWikiDump(){
 
 
 ocr(){
-
   crnnPath="$1"
-  fullPath="$2"
-  if [[ $1 == '--help' || $1 == '-h' || -z $1 ]];then
+  imageInput="$2"
+  outputPath=${3:-./pottan_ocr_output.html}
+
+  if [[ $1 == '--help' || $1 == '-h' || -z $2 ]];then
   cat<<EOF
-Usage: ./pottan ocr <trained_model.pth> <iamge_path>
+Usage: ./pottan ocr <trained_model.h5> <iamge_path> [ pottan_ocr_output.html ]
 EOF
   exit 0;
   fi
 
-  rm -rf tmp/*
-  shift 2
-  baseName=$(basename "$fullPath")
-  withoutExt="${baseName%.*}"
-  workingCopy="./tmp/$baseName"
-  linesDir="./tmp/$withoutExt"
-  mkdir -p ./tmp
-  cp "$fullPath" "$workingCopy"
-  cp "$fullPath" "./tmp/$withoutExt.nrm.png"
-  python ./ocropy/ocropus-gpageseg "$workingCopy" -n --gray -p 1 
-  rm "$linesDir"/*bin.png; my_rename nrm.png bin.png "$linesDir"/*nrm.png
-  python3  -m pottan_ocr.ocr --crnn "$crnnPath"  "$linesDir"/*bin.png "$@"
-  my_rename bin.txt txt "$linesDir"/*.txt
-  python ./ocropy/ocropus-hocr "$workingCopy" -o ./tmp/out.html
+  baseName=$(basename "$imageInput")
+  tmpdir="./tmp/"
+  mkdir -p "$tmpdir"
+
+  echo "Executing tesseract ocr for line segmentation ..."
+  # -c tessedit_write_images=1  can be used to write binary image
+  tesseract -c tessedit_create_hocr=1 "$imageInput"  "$tmpdir/out"
+
+  echo "Running pottan_ocr for text recognition ..."
+  python3 -m pottan_ocr.ocr_hocr --crnn "$crnnPath"  --img "$imageInput"  --hocr  "$tmpdir/out.hocr" --output "$outputPath"
 
   if which xdg-open; then
-    xdg-open ./tmp/out.html
+    xdg-open "$outputPath"
   else
-    echo "OCR completed. Open '$(readlink -f ./tmp/out.html)' to see the results"
+    echo "OCR completed. Open '$outputPath' to see the results"
   fi
 }
 
+
+# For debugging
+visualize_line_segmentation(){
+  tesseract  -c tessedit_create_tsv=1 "$1" out
+  cat out.tsv | awk '{ if( $1==4 ){ print "fill-opacity 0.1 rectangle",$7","$8,$7+$9","$8+$10 } }' > rect.txt
+  convert "$1" -stroke red  -draw @rect.txt dbg.png
+}
 
 
 if [ -z $1 ] || [ $1 == '--help' ]; then

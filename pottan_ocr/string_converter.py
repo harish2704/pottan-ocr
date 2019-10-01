@@ -1,6 +1,6 @@
 
 import re
-from torch import IntTensor
+#  from torch import IntTensor
 from .utils import config
 
 glyphList = config['glyphs']
@@ -12,13 +12,27 @@ glyphSearchRe =  '|'.join( [ re.escape(i) for i in glyphList ] )
 glyphSearchRe = re.compile( '(%s)' % glyphSearchRe)
 
 # Empty string stands for blank
+#  glyphList.insert(0, '')
+
+# Hack for keras. CTC implementation of TF considers (num_classes - 1) as blank
 glyphList.append('')
+
 totalGlyphs = len( glyphList )
 
 def encodeStr( word ):
     glyphs = filter( None, glyphSearchRe.split( word ) )
     out = [ glyphList.index( g ) for g in  glyphs ]
     return out, len( out )
+
+def encodeStrListRaw( lines, maxWidth ):
+    out = []
+    lengths = []
+    for i in lines:
+        encoded, length = encodeStr( i )
+        encoded.extend( [ totalGlyphs - 1 ]* ( maxWidth - length ) )
+        out.append( encoded )
+        lengths.append( maxWidth )
+    return out, lengths
 
 def encodeStrList( items ):
     txt, l = list( zip( *[ encodeStr(i) for i in items ] ) )

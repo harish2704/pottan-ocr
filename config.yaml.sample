@@ -138,44 +138,20 @@ glyphs:
 fonts:
 - - AnjaliOldLipi
   - [regular, bold]
+  - 10
 - - Chilanka
   - [regular, bold, italic]
-- - Dyuthi
-  - [regular, bold, italic, bold italic]
-- - Kalyani
-  - [regular, bold, italic, bold italic]
-- - Karumbi
-  - [regular, bold, italic, bold italic]
-  - 15
+  - 9
 - - Keraleeyam
   - [regular, italic]
+  - 12
 - - Lohit Malayalam
   - [regular, bold, italic, bold italic]
+  - 10
 - - Manjari
   - [regular, bold, italic, bold italic]
-- - Manjari,Manjari Thin
-  - [regular, italic]
+  - 10
 - - Meera
-  - [regular, bold, italic, bold italic]
-- - ML-NILA01
-  - [regular, bold, italic, bold italic]
-- - ML-NILA02
-  - [regular, bold, italic, bold italic]
-- - ML-NILA03
-  - [regular, bold, italic, bold italic]
-- - ML-NILA04
-  - [regular, bold, italic, bold italic]
-- - ML-NILA05
-  - [regular, bold, italic, bold italic]
-- - ML-NILA06
-  - [regular, bold, italic, bold italic]
-- - ML-NILA07
-  - [regular, bold, italic, bold italic]
-- - Noto Sans Malayalam
-  - [regular, bold, italic, bold italic]
-- - Noto Sans Malayalam UI
-  - [regular, bold, italic, bold italic]
-- - Noto Serif Malayalam
   - [regular, bold, italic, bold italic]
 - - Rachana
   - [regular, bold, italic, bold italic]
@@ -183,9 +159,13 @@ fonts:
   - [regular, bold, italic, bold italic]
 - - Samyak Malayalam
   - [regular, bold, italic, bold italic]
+  - 9
 - - Suruma
   - [regular, bold, italic, bold italic]
-- - Uroob
-  - [regular, italic]
+  - 10
+# - - Uroob
+  # - [ regular, italic]
+  # - 12
 imageHeight: 24
 defaultFontSize: 11
+trainImageWidth: 800

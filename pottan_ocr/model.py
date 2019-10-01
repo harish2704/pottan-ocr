@@ -1,85 +1,57 @@
-#!/usr/bin/env python3
 
-#  Source: https://github.com/meijieru/crnn.pytorch/blob/master/models/crnn.py
+import keras
+from keras import backend as K
+from keras.models import Sequential
+from keras.layers import Dense, BatchNormalization, Activation, MaxPooling2D, TimeDistributed
+from keras.layers import Bidirectional, LSTM, Conv2D, ZeroPadding2D, Permute, Reshape, GRU
+K.set_image_data_format('channels_last')
+from pottan_ocr import string_converter as converter
+from pottan_ocr.utils import config
 
-import torch.nn as nn
-
-
-class BidirectionalLSTM(nn.Module):
-
-    def __init__(self, nIn, nHidden, nOut):
-        super(BidirectionalLSTM, self).__init__()
-
-        self.rnn = nn.LSTM(nIn, nHidden, bidirectional=True)
-        self.embedding = nn.Linear(nHidden * 2, nOut)
-
-    def forward(self, input):
-        #  self.rnn.flatten_parameters()
-        recurrent, _ = self.rnn(input)
-        T, b, h = recurrent.size()
-        t_rec = recurrent.view(T * b, h)
-
-        output = self.embedding(t_rec)  # [T * b, nOut]
-        output = output.view(T, b, -1)
-
-        return output
+LAST_CNN_SIZE=256
 
 
-class CRNN(nn.Module):
+def KerasCrnn(imgH=config['imageHeight'], nc=1, nclass=converter.totalGlyphs, nh=32 ):
 
-    def __init__(self, imgH, nc, nclass, nh, n_rnn=2, leakyRelu=False):
-        super(CRNN, self).__init__()
-        assert imgH % 16 == 0, 'imgH has to be a multiple of 16'
+    ks = [3  , 3  , 3   , 3   , 3   , 3   ] #, 2   ]
+    ps = [1  , 1  , 1   , 1   , 1   , 1   ] #, 0   ]
+    ss = [1  , 1  , 1   , 1   , 1   , 1   ] #, 1   ]
+    nm = [32 , 64 , 128 , 128 , 256 , 256 ] #, 512 ]
 
-        ks = [3, 3, 3, 3, 3, 3, 2]
-        ps = [1, 1, 1, 1, 1, 1, 0]
-        ss = [1, 1, 1, 1, 1, 1, 1]
-        nm = [64, 128, 256, 256, 512, 512, 512]
+    cnn = Sequential()
 
-        cnn = nn.Sequential()
+    def convRelu(i, batchNormalization=False ):
+        nIn = nc if i == 0 else nm[i - 1]
+        nOut = nm[i]
+        padding = 'same' if ps[i] else 'valid'
 
-        def convRelu(i, batchNormalization=False):
-            nIn = nc if i == 0 else nm[i - 1]
-            nOut = nm[i]
-            cnn.add_module('conv{0}'.format(i),
-                           nn.Conv2d(nIn, nOut, ks[i], ss[i], ps[i]))
-            if batchNormalization:
-                cnn.add_module('batchnorm{0}'.format(i), nn.BatchNorm2d(nOut))
-            if leakyRelu:
-                cnn.add_module('relu{0}'.format(i),
-                               nn.LeakyReLU(0.2, inplace=True))
-            else:
-                cnn.add_module('relu{0}'.format(i), nn.ReLU(True))
+        if( i == 0):
+            cnn.add( Conv2D( nOut, ks[i], strides=ss[i], input_shape=( imgH, None, 1 ), padding=padding, name='conv{0}'.format(i) ) )
+        else:
+            cnn.add( Conv2D( nOut, ks[i], strides=ss[i], padding=padding, name='conv{0}'.format(i) ) )
+        if batchNormalization:
+            cnn.add( BatchNormalization(axis=3, momentum=0.1, epsilon=1e-5, name='batchnorm{0}'.format(i) ))
+        cnn.add( Activation('relu', name='relu{0}'.format(i) ))
 
-        convRelu(0)
-        cnn.add_module('pooling{0}'.format(0), nn.MaxPool2d(2, 2))  # 64x16x64
-        convRelu(1)
-        cnn.add_module('pooling{0}'.format(1), nn.MaxPool2d(2, 2))  # 128x8x32
-        convRelu(2, True)
-        convRelu(3)
-        cnn.add_module('pooling{0}'.format(2),
-                       nn.MaxPool2d((2, 2), (2, 1), (0, 1)))  # 256x4x16
-        convRelu(4, True)
-        convRelu(5)
-        cnn.add_module('pooling{0}'.format(3),
-                       nn.MaxPool2d((2, 2), (2, 1), (0, 1)))  # 512x2x16
-        convRelu(6, True)  # 512x1x16
+    convRelu(0)
+    cnn.add( MaxPooling2D( pool_size=2, strides=2, name='pooling{0}'.format(0) ) )  # 64x16x64
+    convRelu(1)
+    cnn.add( MaxPooling2D( pool_size=2, strides=2, name='pooling{0}'.format(1) ) )  # 128x8x32
+    convRelu(2, True)
+    convRelu(3)
+    cnn.add( ZeroPadding2D( padding=(0,1) ))
+    cnn.add( MaxPooling2D( pool_size=(2, 2), strides=(2, 1), padding='valid', name='pooling{0}'.format(2) ) )  # 256x4x16
+    convRelu(4, True)
+    convRelu(5)
+    cnn.add( ZeroPadding2D( padding=(0,1) ))
+    cnn.add( MaxPooling2D( pool_size=(2, 2), strides=(2, 1), padding='valid', name='pooling{0}'.format(3) ) )  # 512x2x16
 
-        self.cnn = cnn
-        self.rnn = nn.Sequential(
-            BidirectionalLSTM(512, nh, nh),
-            BidirectionalLSTM(nh, nh, nclass))
+    cnn.add(Reshape((-1, LAST_CNN_SIZE )))
+    cnn.add(Bidirectional( LSTM( nh , return_sequences=True, use_bias=True, recurrent_activation='sigmoid', )) )
+    cnn.add( TimeDistributed( Dense( nh) ) )
+    cnn.add(Bidirectional( LSTM( nh , return_sequences=True, use_bias=True, recurrent_activation='sigmoid', )) )
+    cnn.add( TimeDistributed(Dense( nclass ) ) )
 
-    def forward(self, input):
-        # conv features
-        conv = self.cnn(input)
-        b, c, h, w = conv.size()
-        #  print( 'b %s, c %s, h %s, w %s' %(b, c, h, w) )
-        assert h == 1, "the height of conv must be 1"
-        conv = conv.squeeze(2)
-        conv = conv.permute(2, 0, 1)  # [w, b, c]
+    return cnn
 
-        # rnn features
-        output = self.rnn(conv)
 
-        return output

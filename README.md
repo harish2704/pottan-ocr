@@ -4,12 +4,15 @@
 
 A stupid OCR for malayalam language. It can be Easily configured to process any other languages with complex scripts
 
-## Demo
+## Web Demo of individual line recognition
 https://harish2704.github.io/pottan-demo/
+
+## Screenshot of complete page OCR
+![Screenshot](https://i.imgur.com/CqeBYox.png)
 
 ## Installation
 
-#### Clone the project ( This project has git submodules. So downloading zip file may not work easily )
+#### Clone the project
 ```
 git clone https://github.com/harish2704/pottan-ocr
 cd pottan-ocr
@@ -72,6 +75,11 @@ List of available commands ( See '--help' of individual command for more details
     ocr             - Run charector recognition with a pre-trained model and image file
 ```
 
+## OCR usage
+
+```
+./bin/pottan ocr <trained_model.h5> <iamge_path> [ pottan_ocr_output.html ]
+```
 
 
 ## Training
