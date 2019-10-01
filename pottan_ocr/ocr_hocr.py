@@ -75,7 +75,7 @@ def main( args ):
             #  children[0].text = txt
         #  else:
             #  el.text = txt
-    writeFile( args.output, dom.html() )
+    writeFile( args.output, dom.html().replace('</head>', "<style> .ocr_line{ display: block; } </style></head>" ) )
 
 if( __name__ == '__main__' ):
     parser = argparse.ArgumentParser()

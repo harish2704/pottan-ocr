@@ -9,7 +9,7 @@ https://harish2704.github.io/pottan-demo/
 
 ## Installation
 
-#### Clone the project ( This project has git submodules. So downloading zip file may not work easily )
+#### Clone the project
 ```
 git clone https://github.com/harish2704/pottan-ocr
 cd pottan-ocr
