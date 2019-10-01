@@ -55,7 +55,7 @@ By default, the installer will install dependencies which is necessary to run th
   ```
 3. Run the OCR using any PNG/JPEG image
   ```bash
-  ./bin/pottan ocr ./misc/netCRNN_01-19-06-09-54_3.pth <path_to_image.png>
+  ./bin/pottan ocr <trained_model.h5> <iamge_path> [ pottan_ocr_output.html ]
   ```
 
 For more details, see the `--help` of `bin/pottan` and its subcommands
@@ -73,12 +73,6 @@ List of available commands ( See '--help' of individual command for more details
     train           - Run the training
 
     ocr             - Run charector recognition with a pre-trained model and image file
-```
-
-## OCR usage
-
-```
-./bin/pottan ocr <trained_model.h5> <iamge_path> [ pottan_ocr_output.html ]
 ```
 
 
