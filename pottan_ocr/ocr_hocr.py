@@ -65,17 +65,12 @@ def main( args ):
         img_word = img.crop( cords )
         img_word = resize_img( img_word, lineHeight )
         img_words.append( img_word )
+
     ocr_res = ocr_images( model, img_words )
     for el, txt in zip( el_words, ocr_res):
         for child in el.getchildren(): el.remove( child )
         el.text = txt
 
-        #  Word based ocr
-        #  children = el.getchildren()
-        #  if( len( children ) ):
-            #  children[0].text = txt
-        #  else:
-            #  el.text = txt
     writeFile( args.output, dom.html().replace('</head>', "<style> .ocr_line{ display: block; } </style></head>" ) )
 
 if( __name__ == '__main__' ):
