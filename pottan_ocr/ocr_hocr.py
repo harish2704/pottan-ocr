@@ -39,18 +39,21 @@ def resize_img( img, targetH ):
     img = img.resize( (targetW, targetH ), Image.BILINEAR )
     return normaizeImg( np.array( img ), 2 )
 
+
 def ocr_images( model, images ):
     #  import pdb; pdb.set_trace();
     #  from IPython import embed; embed()
-    maxWidth = max([i.shape[1] for i in images ])
-    images = [ np.pad( i, [(0, 0), (0, maxWidth - i.shape[1] ), (0,0)], mode='constant', constant_values=1) for i in images ]
-    out =  model.predict( np.array(images) )
-    out = out.argmax(2)
-    textResults = [ decodeStr( i, raw=False ) for i in out ]
-    return textResults
+    out = []
+    for img in images:
+        res = model.predict( np.array([img]) )
+        res = res.argmax(2)
+        out.append( decodeStr( res[0], raw=False ) )
+    return out
+
 
 def main( args ):
     model = models.load_model( opt.crnn )
+    #  print( model.summary() ); return;
     img = Image.open( args.img ).convert('L')
     hocr =  readFile( args.hocr )
 
@@ -72,6 +75,7 @@ def main( args ):
         el.text = txt
 
     writeFile( args.output, dom.html().replace('</head>', "<style> .ocr_line{ display: block; } </style></head>" ) )
+
 
 if( __name__ == '__main__' ):
     parser = argparse.ArgumentParser()
