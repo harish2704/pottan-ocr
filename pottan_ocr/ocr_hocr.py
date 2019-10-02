@@ -32,39 +32,40 @@ from pottan_ocr import utils
     #  plt.show()
 
 
-imageHeight = config['imageHeight'] - 3
 
-def resize_img( img ):
+def resize_img( img, targetH ):
     origW, origH = img.size
-    targetH = imageHeight
     targetW = int( origW * targetH/origH )
     img = img.resize( (targetW, targetH ), Image.BILINEAR )
     return normaizeImg( np.array( img ), 2 )
 
-def ocr_images( images ):
-    model = models.load_model( opt.crnn )
+def ocr_images( model, images ):
+    #  import pdb; pdb.set_trace();
+    #  from IPython import embed; embed()
     maxWidth = max([i.shape[1] for i in images ])
-    images = [ np.pad( i, [(2, 1), (0, maxWidth - i.shape[1] ), (0,0)], mode='constant', constant_values=1) for i in images ]
+    images = [ np.pad( i, [(0, 0), (0, maxWidth - i.shape[1] ), (0,0)], mode='constant', constant_values=1) for i in images ]
     out =  model.predict( np.array(images) )
     out = out.argmax(2)
     textResults = [ decodeStr( i, raw=False ) for i in out ]
     return textResults
 
 def main( args ):
+    model = models.load_model( opt.crnn )
     img = Image.open( args.img ).convert('L')
     hocr =  readFile( args.hocr )
+
+    lineHeight = model.input.shape[1].value
     dom = pq( hocr.encode('utf-8') )
+
     el_words = [ i for i in dom('.ocr_line') if extract_text(i).strip() ]
-    #  import pdb; pdb.set_trace();
-    #  from IPython import embed; embed()
     img_words = []
     for el in el_words:
         title = el.get('title');
         cords = [ int(i) for i in title.split(';')[0].split(' ')[1:] ]
         img_word = img.crop( cords )
-        img_word = resize_img( img_word )
+        img_word = resize_img( img_word, lineHeight )
         img_words.append( img_word )
-    ocr_res = ocr_images( img_words )
+    ocr_res = ocr_images( model, img_words )
     for el, txt in zip( el_words, ocr_res):
         for child in el.getchildren(): el.remove( child )
         el.text = txt
