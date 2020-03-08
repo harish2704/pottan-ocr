@@ -25,6 +25,22 @@ $(function() {
   var debugCheckbox = $('#cb_debug');
 
   function initUi() {
+
+    document.onpaste = function(event){
+      var items = (event.clipboardData || event.originalEvent.clipboardData).items;
+      for (var index in items) {
+        var item = items[index];
+        if (item.kind === 'file') {
+          var blob = item.getAsFile();
+          var reader = new FileReader();
+          reader.onload = function(event){
+            imgCropper.data('cropper').replace( event.target.result );
+          };
+          reader.readAsDataURL(blob);
+        }
+      }
+    };
+
     img.on('ready', function(){
       imgCropper.setCropBoxData({left: 208.5, top: 49, width: 211, height: 41});
     });
