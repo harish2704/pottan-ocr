@@ -8,6 +8,12 @@
   .lineseg{
     border: red solid 2px
   }
+  .btn .spinner-border, .btn .txt-loading, .btn[disabled] .txt-button{
+    display: none;
+  }
+  .btn[disabled] .spinner-border, .btn[disabled] .txt-loading, .btn .txt-button{
+    display: inline-block;
+  }
 </style>
 </head>
 <body >
@@ -28,7 +34,11 @@
               <input type="text" class="form-control" placeholder='Choose a file...' />
               <div class="input-group-append">
                 <button class="btn btn-primary btn-choose" type="button">Choose another image</button>
-                <button class="btn btn-success pull-right" id="run-btn">Run recognizer</button>
+                <button class="btn btn-success pull-right" id="run-btn">
+                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    <span class="txt-loading">Loading...</span>
+                    <span class="txt-button">Run OCR</span>
+                </button>
               </div>
             </div>
           </div>
@@ -52,11 +62,12 @@
           <canvas id="for-cropper" class="img-thumbnail" src="" alt="Selected image"/>
         </div>
         <div class="col-md-6">
-          <br />
-          <br />
-          <br />
-          <br />
-          <pre id="output"></pre>
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title text-primary">OCR Output</h5>
+              <pre id="output"></pre>
+            </div>
+          </div>
         </div>
       </div>
 

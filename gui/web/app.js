@@ -97,7 +97,9 @@ $(function() {
       }
     );
 
-    $('#run-btn').click(function(){
+    var runButton = $('#run-btn');
+    runButton.click(function(){
+      runButton.attr('disabled', 'disabled');;
       var data = new FormData();
       data.append('image', currentFile );
       $.ajax({
@@ -110,9 +112,12 @@ $(function() {
           console.log( 'success', data );
           drawBoxes( data );
           $('#output').text( data.text.join('\n') )
+          runButton.removeAttr('disabled');
         },
         error: function (error) {
           console.log( 'error', data );
+          alert('Some error occurred while Calling OCR API')
+          runButton.removeAttr('disabled');
         },
         data: data,
         processData: false,

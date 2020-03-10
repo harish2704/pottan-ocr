@@ -71,6 +71,7 @@ class OcrTask:
         hocr =  readFile( self.hocrFile )
         dom = pq( hocr.encode('utf-8') )
         lineSegs = []
+        baseLineInfo = []
         for el in dom('.ocr_line'):
             if extract_text(el).strip():
                 title = el.get('title');
@@ -81,12 +82,12 @@ class OcrTask:
                 cords[1] = cords[1]-padding_top
                 cords[2] = cords[2]+5
                 cords[3] = cords[3]+padding_bottom
-                #  cords[3] = cords[3] - int(float(titleItems[1].split(' ')[3] ))
+
+                lineSegs.append( cords )
 
                 #baseline inforation
-                lineSegs.append( cords )
-                #  lineSegs.append( { 'bbox': cords, 'rot':  float(titleItems[1].split(' ')[2] )  } )
-        return lineSegs
+                baseLineInfo.append( list( map(float, titleItems[1].split(' ')[2:] ) ) )
+        return lineSegs, baseLineInfo
 
     def getOcrResult( self, lineSegs ):
         global lineHeight
@@ -111,10 +112,10 @@ def do_ocr():
     padding_bottom = int(request.args['padding_bottom'] )
     ocrTask = OcrTask()
     f.save( ocrTask.imageFile )
-    lineSegs = ocrTask.getLineSegs( padding_top, padding_bottom )
+    lineSegs, baseLineInfo = ocrTask.getLineSegs( padding_top, padding_bottom )
     ocrResult = ocrTask.getOcrResult( lineSegs )
     ocrTask.cleanFiles()
-    response = jsonify( lines=lineSegs, text=ocrResult )
+    response = jsonify( lines=lineSegs, text=ocrResult, baselines=baseLineInfo )
     response.headers.add("Access-Control-Allow-Origin", "*")
     return response
 
