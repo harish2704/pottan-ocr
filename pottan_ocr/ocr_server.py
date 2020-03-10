@@ -65,7 +65,7 @@ class OcrTask:
         os.remove(self.imageFile)
         os.remove(self.hocrFile)
 
-    def getLineSegs( self ):
+    def getLineSegs( self, padding_top=0, padding_bottom=0 ):
         self.log('getLineSegs')
         subprocess.run(['tesseract','-c', 'tessedit_create_hocr=1', self.imageFile, self.hocrFile[:-5]])
         hocr =  readFile( self.hocrFile )
@@ -75,8 +75,17 @@ class OcrTask:
             if extract_text(el).strip():
                 title = el.get('title');
                 #  cords – a 4-tuple defining the left, upper, right, and lower pixel coordinate.
-                cords = [ int(i) for i in title.split(';')[0].split(' ')[1:] ]
+                titleItems = title.split(';')
+                cords = [ int(i) for i in titleItems[0].split(' ')[1:] ]
+                cords[0] = cords[0]-5
+                cords[1] = cords[1]-padding_top
+                cords[2] = cords[2]+5
+                cords[3] = cords[3]+padding_bottom
+                #  cords[3] = cords[3] - int(float(titleItems[1].split(' ')[3] ))
+
+                #baseline inforation
                 lineSegs.append( cords )
+                #  lineSegs.append( { 'bbox': cords, 'rot':  float(titleItems[1].split(' ')[2] )  } )
         return lineSegs
 
     def getOcrResult( self, lineSegs ):
@@ -84,33 +93,39 @@ class OcrTask:
         self.log('getOcrResult')
         img = Image.open( self.imageFile ).convert('L')
         img_lines = []
-        for cords in lineSegs:
-            img_line = img.crop( cords )
+        for lineSeg in lineSegs:
+            img_line = img.crop( lineSeg )
             img_line = resize_img( img_line, lineHeight )
             img_lines.append( img_line )
         ocr_res = ocr_images( img_lines )
         return ocr_res
 
-app = Flask(__name__)
+app = Flask(__name__,
+        static_url_path='',
+        static_folder='../gui/web/',)
 
 @app.route('/ocr', methods=['POST'])
 def do_ocr():
     f = request.files['image']
+    padding_top = int(request.args['padding_top'])
+    padding_bottom = int(request.args['padding_bottom'] )
     ocrTask = OcrTask()
     f.save( ocrTask.imageFile )
-    lineSegs = ocrTask.getLineSegs()
+    lineSegs = ocrTask.getLineSegs( padding_top, padding_bottom )
     ocrResult = ocrTask.getOcrResult( lineSegs )
     ocrTask.cleanFiles()
-    return jsonify( lines=lineSegs, text=ocrResult )
+    response = jsonify( lines=lineSegs, text=ocrResult )
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    return response
 
 
 if( __name__ == '__main__' ):
     parser = argparse.ArgumentParser()
     parser.add_argument('--crnn', required=True, help="path to pre trained model ( Keras saved model (.h5 file) )")
     opt = parser.parse_args()
-    from keras import models
+    from tensorflow.keras import models
     model = models.load_model( opt.crnn )
-    lineHeight = model.input.shape[1].value
+    lineHeight = model.input.shape[1]
     if not os.path.exists(TEMP_DIR):
         os.makedirs(TEMP_DIR)
     app.run(host='0.0.0.0', port=5544)

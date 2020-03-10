@@ -22,7 +22,7 @@
       </div>
 
       <div class="col-md-12 row">
-        <div class="col-md-8">
+        <div class="col-md-4">
           <div class="form-group">
             <div class="input-group input-file" >
               <input type="text" class="form-control" placeholder='Choose a file...' />
@@ -33,6 +33,18 @@
             </div>
           </div>
         </div>
+        <div class="col-md-2">
+          <div class="form-row">
+            <div class="col">
+              <label>Padding top</label>
+              <input id="ip-padding-top" type="number" class="form-control" value=0>
+            </div>
+            <div class="col">
+              <label>Padding bottom</label>
+              <input id="ip-padding-bottom" type="number" class="form-control" value=0>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="row">
@@ -40,6 +52,10 @@
           <canvas id="for-cropper" class="img-thumbnail" src="" alt="Selected image"/>
         </div>
         <div class="col-md-6">
+          <br />
+          <br />
+          <br />
+          <br />
           <pre id="output"></pre>
         </div>
       </div>

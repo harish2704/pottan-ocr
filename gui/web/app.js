@@ -30,31 +30,36 @@ $(function() {
   }
 
   function setImage( file ){
-    currentFile = file;
-    var ctx = canvas.getContext('2d');
-    var img = new Image;
-    img.onload = function() {
-      canvas.width = img.width;
-      canvas.height = img.height;
-      ctx.drawImage(img, 0, 0);
-    }
-    img.src = URL.createObjectURL( file );
+    return new Promise(function(resolve, reject){
+      currentFile = file;
+      var ctx = canvas.getContext('2d');
+      var img = new Image;
+      img.onload = function() {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+        resolve();
+      }
+      img.src = URL.createObjectURL( file );
+    });
   }
 
   function drawBoxes( data ){
-    var lines = data.lines;
-    lines.forEach(function(line){
-      var ctx = canvas.getContext('2d');
-      var width = line[2] - line[0];
-      var height = line[3] - line[1];
-      ctx.beginPath();
-      ctx.lineWidth = "4";
-      ctx.strokeStyle = "red";
-      // ctx.rotate( item.rot );
-      ctx.rect( line[0], line[1], width, height);
-      ctx.stroke();
-      // ctx.rotate(0-item.rot);
-    })
+    setImage( currentFile )
+      .then(function(){
+        var lines = data.lines;
+        var ctx = canvas.getContext('2d');
+        var colors = [ '#dc3545', '#007bff', '#28a745']
+        lines.forEach(function(line, i){
+          var width = line[2] - line[0];
+          var height = line[3] - line[1];
+          ctx.beginPath();
+          ctx.lineWidth = "3";
+          ctx.strokeStyle = colors[ i%colors.length ];
+          ctx.rect( line[0], line[1], width, height);
+          ctx.stroke();
+        })
+      })
   }
 
 
@@ -97,7 +102,10 @@ $(function() {
       data.append('image', currentFile );
       $.ajax({
         type: "POST",
-        url: "http://localhost:5544/ocr",
+        url: "/ocr?" + $.param({
+          padding_top: $('#ip-padding-top').val(),
+          padding_bottom: $('#ip-padding-bottom').val(),
+        }),
         success: function (data) {
           console.log( 'success', data );
           drawBoxes( data );
