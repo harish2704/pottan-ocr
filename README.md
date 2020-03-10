@@ -4,7 +4,10 @@
 
 A stupid OCR for malayalam language. It can be Easily configured to process any other languages with complex scripts
 
-## Web Demo of individual line recognition
+## complete page OCR server demo
+https://pottan-ocr.harishk.in/
+
+## Client side web Demo of individual line recognition
 https://harish2704.github.io/pottan-demo/
 
 ## Screenshot of complete page OCR
