@@ -11,10 +11,7 @@ glyphSearchRe =  '|'.join( [ re.escape(i) for i in glyphList ] )
 
 glyphSearchRe = re.compile( '(%s)' % glyphSearchRe)
 
-# Empty string stands for blank
-#  glyphList.insert(0, '')
-
-# Hack for keras. CTC implementation of TF considers (num_classes - 1) as blank
+# CTC implementation of TF considers (num_classes - 1) as blank
 glyphList.append('')
 
 totalGlyphs = len( glyphList )
