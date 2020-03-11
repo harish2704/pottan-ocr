@@ -19,7 +19,9 @@ parser.add_argument('--adam', action='store_true', help='Whether to use adam (de
 opt = parser.parse_args()
 print(opt)
 
+import tensorflow as tf
 import keras
+from datetime import datetime
 from keras import models
 from keras.callbacks import Callback
 from pottan_ocr.model import KerasCrnn
@@ -43,11 +45,10 @@ backBone = KerasCrnn( nh=opt.nh )
 
 
 if( opt.crnn ):
-    backBone.load_weights( opt.crnn )
+    backBone = keras.models.load_model( opt.crnn )
     print( 'Loaded "%s"' % opt.crnn )
 
-#  plot_model(m, to_file='model.png', show_shapes=True)
-outputSize = backBone.layers[-1].output.shape[1].value
+#  plot_model( backBone, to_file='model.png', show_shapes=True)
 
 
 if( opt.adadelta ):
@@ -55,7 +56,7 @@ if( opt.adadelta ):
 elif( opt.adam ):
     optimizer = Adam( lr=opt.lr  )
 else:
-    optimizer = RMSprop( lr=opt.lr, epsilon=K.epsilon() )
+    optimizer = RMSprop( lr=opt.lr )
 
 class DataGenerator( Sequence ):
     def __init__( self, txtFile, **kwargs):
@@ -78,10 +79,9 @@ class DataGenerator( Sequence ):
 
 def ctc_lambda_func( args ):
     y_pred, labels, label_lengths = args
-    y_pred_len = [ [y_pred.shape[1].value] ] * batchSize
-    y_pred_len = K.variable( y_pred_len )
+    y_pred_len = [ [y_pred.shape[1] ] ] * batchSize
     #  y_pred = y_pred[:, 2:, :]
-    return K.ctc_batch_cost( labels, K.softmax( y_pred ), K.variable( y_pred_len ), label_lengths )
+    return K.ctc_batch_cost( labels, K.softmax( y_pred ), y_pred_len, label_lengths )
 
 labels = Input(name='the_labels', shape=[ labelWidth ], dtype='int32')
 images = Input(name='the_images', shape=[ targetH, targetW, 1 ], dtype='float32')
@@ -102,13 +102,17 @@ test_loader = DataGenerator( opt.valdata, batchSize=opt.batchSize, limit=opt.val
 #  import IPython as x; x.embed()
 
 class WeightsSaver(Callback):
+    def __init__(self):
+        self.fname = opt.outfile + '_' + datetime.now().strftime('%d%m%Y_%H%M%S')
+        self.i = 1
     def on_epoch_end(self, epoch, logs={}):
-        name = opt.outfile
+        name = '%s_%i.h5' % (self.fname, self.i)
         backBone.save( name )
-        print( 'Saved "%s"' % name )
+        print( 'Saved "%s"' % name)
+        self.i = self.i + 1
 
-from keras.callbacks import  TensorBoard
-tenbordlogs = TensorBoard( update_freq='batch' )
+#  from keras.callbacks import  TensorBoard
+#  tensorboardLogs = TensorBoard( update_freq='batch' )
 
 model_saver = WeightsSaver()
 fullModel.fit_generator(generator=train_loader,
@@ -116,4 +120,4 @@ fullModel.fit_generator(generator=train_loader,
                     epochs=opt.niter,
                     validation_data=test_loader,
                     validation_steps=int(opt.valdata_limit/batchSize),
-                    initial_epoch=0, callbacks=[ model_saver, tenbordlogs ])
+                    initial_epoch=0, callbacks=[ model_saver ])

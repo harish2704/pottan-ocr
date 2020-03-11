@@ -17,3 +17,6 @@ config.yaml
 web-demo/dist
 web-demo/data/
 *.min.js
+logs/
+venv/
+./pipenv
