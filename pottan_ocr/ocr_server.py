@@ -18,8 +18,7 @@ import numpy as np
 from pyquery import PyQuery as pq
 from pyquery.text import extract_text
 
-from pottan_ocr.utils import config, readFile, writeFile
-from pottan_ocr.dataset import normaizeImg
+from pottan_ocr.utils import config, readFile, writeFile, normaizeImg
 from pottan_ocr.string_converter import decodeStr
 from pottan_ocr import utils
 import subprocess
@@ -110,8 +109,10 @@ def do_ocr():
     f = request.files['image']
     padding_top = int(request.args['padding_top'])
     padding_bottom = int(request.args['padding_bottom'] )
+
     ocrTask = OcrTask()
     f.save( ocrTask.imageFile )
+
     lineSegs, baseLineInfo = ocrTask.getLineSegs( padding_top, padding_bottom )
     ocrResult = ocrTask.getOcrResult( lineSegs )
     ocrTask.cleanFiles()

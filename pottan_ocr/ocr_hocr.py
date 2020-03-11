@@ -20,8 +20,7 @@ from keras import models
 from pyquery import PyQuery as pq
 from pyquery.text import extract_text
 
-from pottan_ocr.utils import config, readFile, writeFile
-from pottan_ocr.dataset import normaizeImg
+from pottan_ocr.utils import config, readFile, writeFile, normaizeImg
 from pottan_ocr.string_converter import decodeStr
 from pottan_ocr import utils
 

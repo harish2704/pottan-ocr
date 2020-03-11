@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from .utils import config, readLines, writeFile, showImg
+from .utils import config, readLines, writeFile, showImg, normalizeBatch
 
 import os
 import math
@@ -207,20 +207,6 @@ def getTrainingTexts( txtFile ):
     lines = readLines( txtFile )
     lines = filter( None, lines )
     return list(set( lines ))
-
-
-def normaizeImg( img, channel_axis=0 ):
-    img = img.astype('f')
-    img = ( img - 127.5 ) / 127.5
-    img = np.expand_dims( img, channel_axis )
-    return img
-
-
-def normalizeBatch( batch, channel_axis=0 ):
-    images, labels = zip(*batch)
-    images = [ normaizeImg( image, channel_axis ) for image in images]
-    images = np.stack( images )
-    return images, np.array( labels )
 
 
 

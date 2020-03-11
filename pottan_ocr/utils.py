@@ -1,17 +1,26 @@
-#  import torch
 import json
 import numpy as np
-#  from torch.autograd import Variable
 import gzip
 import yaml
 from re import split
-#  from matplotlib import pyplot
 
 
 def showImg( im ):
+    from matplotlib import pyplot
     pyplot.imshow( im )
     pyplot.show()
 
+def normaizeImg( img, channel_axis=0 ):
+    img = img.astype('f')
+    img = ( img - 127.5 ) / 127.5
+    img = np.expand_dims( img, channel_axis )
+    return img
+
+def normalizeBatch( batch, channel_axis=0 ):
+    images, labels = zip(*batch)
+    images = [ normaizeImg( image, channel_axis ) for image in images]
+    images = np.stack( images )
+    return images, np.array( labels )
 
 def myOpen( fname, mode ):
     return open( fname, mode, encoding="utf-8" )
