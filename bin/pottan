@@ -16,8 +16,8 @@ datagen(){
 
 
 train(){
-  # python3 -m pottan_ocr.train "$@"
-  ipython3 --matplotlib=tk  -m pottan_ocr.train -- "$@"
+  python3 -m pottan_ocr.train "$@"
+  # ipython3 --matplotlib=tk  -m pottan_ocr.train -- "$@"
 }
 
 

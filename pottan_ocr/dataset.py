@@ -25,7 +25,7 @@ canvasWidth = targetW*2
 
 
 #  Text alignment variations
-VARIATIONS = Enum('AlignmentVariation', 'random alighn_bottom alighn_top fit_height' )
+VARIATIONS = Enum('AlignmentVariation', 'random align_h fit_height' )
 
 fontList = config['fonts']
 fontListFlat = []
@@ -34,8 +34,8 @@ for fnt, styles, *customFontSize in fontList:
         fontSize = defaultFontSize if len( customFontSize ) == 0 else customFontSize[0]
         fontDescStr = '%s %s %s' %( fnt, style, fontSize )
         fontListFlat.append([ fontDescStr, VARIATIONS.random, ])
-        fontListFlat.append([ fontDescStr, VARIATIONS.alighn_top, ])
-        fontListFlat.append([ fontDescStr,  VARIATIONS.alighn_bottom ])
+        fontListFlat.append([ fontDescStr, VARIATIONS.random, ])
+        fontListFlat.append([ fontDescStr, VARIATIONS.align_h, ])
         fontListFlat.append([ fontDescStr,  VARIATIONS.fit_height ])
 
 totalVariations = len(fontListFlat)
@@ -55,15 +55,15 @@ fontDescCache = {};
 #  +1 --> Maximum possible positive rotation with in available free space
 TWIST_CHOICES = [ 
         -1,
+        -0.95,
+        -0.90,
         -0.80,
-        -0.60,
-        -0.40,
         #  -0.20,
         #  0.00,
         #  0.20,
-        0.40,
-        0.60,
         0.80,
+        0.90,
+        0.95,
         1 ]
 
 noiseSDChoices = [
@@ -131,6 +131,7 @@ def renderText( text, font, variation ):
 
     #  global stats
     text = choice( leftPaddingChoices ) + text
+    #  text = choice( leftPaddingChoices ) + text[:-20] + font
     #  print("'"+text+"'")
     surface = cairo.ImageSurface(cairo.FORMAT_A8, canvasWidth, imageHeight )
     context = cairo.Context(surface)
@@ -161,15 +162,9 @@ def renderText( text, font, variation ):
         context.rotate( twist * math.atan( ( imageHeight - actualH  )/ actualW  ) )
         if twist < 0:
             context.translate(0, imageHeight - actualH )
-    elif( variation == VARIATIONS.alighn_top ):
-        #  stats['top'] +=1
-        context.translate(0, -1)
-        # Random alignment means random rotation
-        #  context.translate(0, imageHeight - actualH )
-    elif( variation == VARIATIONS.alighn_bottom ):
-        #  stats['bot'] +=1
-        # Random alignment means random rotation
-        context.translate(0, imageHeight - actualH )
+    elif( variation == VARIATIONS.align_h ):
+        availablePadding = imageHeight - actualH
+        context.translate(0, int( availablePadding * random.random()))
 
 
 

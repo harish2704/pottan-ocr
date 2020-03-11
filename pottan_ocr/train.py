@@ -45,7 +45,9 @@ backBone = KerasCrnn( nh=opt.nh )
 
 
 if( opt.crnn ):
-    backBone = keras.models.load_model( opt.crnn )
+    backBone_ = keras.models.load_model( opt.crnn )
+    backBone.set_weights( backBone_.get_weights() )
+    backBone.summary()
     print( 'Loaded "%s"' % opt.crnn )
 
 #  plot_model( backBone, to_file='model.png', show_shapes=True)
@@ -105,11 +107,14 @@ class WeightsSaver(Callback):
     def __init__(self):
         self.fname = opt.outfile + '_' + datetime.now().strftime('%d%m%Y_%H%M%S')
         self.i = 1
-    def on_epoch_end(self, epoch, logs={}):
-        name = '%s_%i.h5' % (self.fname, self.i)
-        backBone.save( name )
-        print( 'Saved "%s"' % name)
-        self.i = self.i + 1
+        self.j = 1
+    def on_batch_end(self, epoch, logs={}):
+        if(self.j%100 == 0):
+            name = '%s_%i.h5' % (self.fname, self.i)
+            backBone.save( name )
+            print( 'Saved "%s"' % name)
+            self.i = self.i + 1
+        self.j = self.j + 1
 
 #  from keras.callbacks import  TensorBoard
 #  tensorboardLogs = TensorBoard( update_freq='batch' )
