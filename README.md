@@ -50,7 +50,7 @@ By default, the installer will install dependencies which is necessary to run th
 
 1. Download [latest pre-trained model][latest_model] file from [pottan-ocr-data][data_repo] repository
   ```bash
-  wget 'https://github.com/harish2704/pottan-ocr-data/raw/master/pottan_backbone.h5' -O pottan_backbone.h5
+  wget 'https://github.com/harish2704/pottan-ocr-data/raw/master/crnn_11032020_171631_5.h5' -O pottan_ocr_latest.h5
   ```
 2. Create configuration file
   ```bash
@@ -112,6 +112,6 @@ For more details, see [wiki](https://github.com/harish2704/pottan-ocr/wiki/How-t
 * [Swathanthra Malayalam Computing](https://smc.org.in/) group members for evaluating and providing suggestions.
 * Stackoverflow user "Yu-Yang" for answering [ my question ](https://stackoverflow.com/questions/48361376/converting-state-parameters-of-pytorch-lstm-to-keras-lstm)
 
-[latest_model]: https://github.com/harish2704/pottan-ocr-data/blob/master/pottan_backbone.h5
+[latest_model]: https://github.com/harish2704/pottan-ocr-data/blob/master/crnn_11032020_171631_5.h5
 [data_repo]: https://github.com/harish2704/pottan-ocr-data
 [floyd_hub_page]: https://www.floydhub.com/harish2704/projects/pottan-ocr/3
