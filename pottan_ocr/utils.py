@@ -5,9 +5,25 @@ import yaml
 from re import split
 
 
-def showImg( im ):
+def dump_graph():
+    import tensorflow as tf
+    from tensorflow.python.ops import summary_ops_v2
+    from tensorflow.python.keras.backend import get_graph
+    tb_path = './tensorboard-new'
+    tb_writer = tf.summary.create_file_writer(tb_path)
+    with tb_writer.as_default():
+        summary_ops_v2.graph(get_graph(), step=0)
+
+
+def dump_graph_old(K):
+    import tensorflow as tf
+    graph = K.get_session().graph
+    tf.summary.FileWriter(logdir="./tensorflow-1x", graph=graph)
+
+
+def showImg(im):
     from matplotlib import pyplot
-    pyplot.imshow( im )
+    pyplot.imshow(im)
     pyplot.show()
 
 def normaizeImg( img, channel_axis=0 ):
