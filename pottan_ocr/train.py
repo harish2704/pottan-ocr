@@ -47,9 +47,9 @@ backBone = KerasCrnn( nh=opt.nh )
 if( opt.crnn ):
     backBone_ = keras.models.load_model( opt.crnn )
     backBone.set_weights( backBone_.get_weights() )
-    backBone.summary()
     print( 'Loaded "%s"' % opt.crnn )
 
+backBone.summary()
 #  plot_model( backBone, to_file='model.png', show_shapes=True)
 
 
