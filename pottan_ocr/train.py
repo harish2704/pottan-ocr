@@ -81,7 +81,7 @@ class DataGenerator( Sequence ):
 
 def ctc_lambda_func( args ):
     y_pred, labels, label_lengths = args
-    y_pred_len = [ [y_pred.shape[1] ] ] * batchSize
+    y_pred_len = [ [ int(y_pred.shape[1]) ] ] * batchSize
     #  y_pred = y_pred[:, 2:, :]
     return K.ctc_batch_cost( labels, K.softmax( y_pred ), y_pred_len, label_lengths )
 

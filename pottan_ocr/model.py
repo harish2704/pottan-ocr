@@ -8,10 +8,10 @@ K.set_image_data_format('channels_last')
 from pottan_ocr import string_converter as converter
 from pottan_ocr.utils import config
 
-LAST_CNN_SIZE=256
+LAST_CNN_SIZE=512
 
 
-def KerasCrnn(imgH=config['imageHeight'], nc=1, nclass=converter.totalGlyphs, nh=32 ):
+def KerasCrnn(imgH=config['imageHeight'], nc=1, nclass=converter.totalGlyphs, nh=64 ):
 
     ks = [3  , 3  , 3   , 3   , 3   , 3   ] #, 2   ]
     ps = [1  , 1  , 1   , 1   , 1   , 1   ] #, 0   ]
