@@ -16,7 +16,7 @@ def KerasCrnn(imgH=config['imageHeight'], nc=1, nclass=converter.totalGlyphs, nh
     ks = [3  , 3  , 3   , 3   , 3   , 3   ] #, 2   ]
     ps = [1  , 1  , 1   , 1   , 1   , 1   ] #, 0   ]
     ss = [1  , 1  , 1   , 1   , 1   , 1   ] #, 1   ]
-    nm = [32 , 64 , 128 , 128 , 256 , 256 ] #, 512 ]
+    nm = [64 , 128 , 128 , 256 , 256 , 512 ] #, 512 ]
 
     cnn = Sequential()
 

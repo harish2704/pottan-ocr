@@ -137,21 +137,36 @@ glyphs:
 
 fonts:
 - - AnjaliOldLipi
-  - [regular, bold]
-  - 10
-- - Chilanka
   - [regular, bold, italic]
   - 9
+- - Chilanka
+  - [regular, bold, italic]
+  - 8
+- - FreeSans
+  - [regular, bold, italic]
+  - 9
+# - - FreeSerif
+  # - [regular, bold, italic]
+  # - 10
+- - Gayathri
+  - [regular, bold, italic]
+# - - Karumbi
+  # - [regular, bold]
+  # - 14
 - - Keraleeyam
   - [regular, italic]
-  - 12
+  - 11
 - - Lohit Malayalam
   - [regular, bold, italic, bold italic]
-  - 10
+  - 9
 - - Manjari
   - [regular, bold, italic, bold italic]
-  - 10
-- - Meera
+  - 9
+- - Noto Sans Malayalam
+  - [regular, bold, italic, bold italic]
+- - Noto Sans Malayalam UI
+  - [regular, bold, italic, bold italic]
+- - Noto Serif Malayalam
   - [regular, bold, italic, bold italic]
 - - Rachana
   - [regular, bold, italic, bold italic]
@@ -159,13 +174,13 @@ fonts:
   - [regular, bold, italic, bold italic]
 - - Samyak Malayalam
   - [regular, bold, italic, bold italic]
-  - 9
+  - 8
 - - Suruma
   - [regular, bold, italic, bold italic]
-  - 10
+  - 9
 # - - Uroob
   # - [ regular, italic]
   # - 12
-imageHeight: 24
-defaultFontSize: 11
-trainImageWidth: 800
+imageHeight: 32
+defaultFontSize: 10
+trainImageWidth: 1024
