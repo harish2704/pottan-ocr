@@ -34,7 +34,6 @@ for fnt, styles, *customFontSize in fontList:
         fontSize = defaultFontSize if len( customFontSize ) == 0 else customFontSize[0]
         fontDescStr = '%s %s %s' %( fnt, style, fontSize )
         fontListFlat.append([ fontDescStr, VARIATIONS.random, ])
-        fontListFlat.append([ fontDescStr, VARIATIONS.random, ])
         fontListFlat.append([ fontDescStr, VARIATIONS.align_h, ])
         fontListFlat.append([ fontDescStr,  VARIATIONS.fit_height ])
 
@@ -73,8 +72,8 @@ noiseSDChoices = [
         (0, 20),
         (25, 30),
         (40, 35),
-        (20, 25),
-        (30, 31),
+        #  (20, 25),
+        #  (30, 31),
         #  (0, 40),
         #  (0, 50),
         #  (0, 60),
