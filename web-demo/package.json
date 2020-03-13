@@ -13,7 +13,7 @@
   "dependencies": {
     "@babel/core": "^7.6.2",
     "@babel/preset-env": "^7.6.2",
-    "@tensorflow/tfjs": "^1.2.9",
+    "@tensorflow/tfjs": "^1.7.0",
     "@tensorflow/tfjs-vis": "^1.2.0",
     "babel-loader": "^8.0.6",
     "bootstrap": "^4.0.0",
@@ -22,8 +22,6 @@
     "extract-text-webpack-plugin": "^3.0.2",
     "file-loader": "^1.1.6",
     "jquery": "^3.3.1",
-    "ndarray": "^1.0.18",
-    "ndarray-ops": "^1.2.2",
     "style-loader": "^0.19.1",
     "webpack": "^3.10.0"
   }
