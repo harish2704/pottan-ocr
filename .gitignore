@@ -19,4 +19,5 @@ web-demo/data/
 *.min.js
 logs/
 venv/
-./pipenv
+pipenv/
+data/
