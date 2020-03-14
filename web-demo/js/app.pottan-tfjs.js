@@ -86,7 +86,7 @@ $(function() {
 
   tf.loadLayersModel('./data/pottan_min/model.json').then( model =>{
     window.model = model;
-
+    IMG_HEIGHT = model.layers[0].batchInputShape[1];
     // This is hack to trace outputs of each layer after execution
     model.layers.forEach(function( l ){
       l.__orig_call = l.call;

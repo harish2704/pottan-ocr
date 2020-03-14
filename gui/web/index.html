@@ -19,21 +19,13 @@
   }
   .marked-line.hightlighed{
     border-width: 6px;
-  }
-  .marked-line:has(+ div.hightlighed){
-    border-style: none;
-  }
-  .marked-line.hightlighed+div {
-    border-style: none;
+    border-color: red !important;
   }
   .marked-line:nth-child(3n) {
-    border-color: red;
-  }
-  .marked-line:nth-child(3n+1) {
-    border-color: blue;
-  }
-  .marked-line:nth-child(3n+1) {
     border-color: green;
+  }
+  .marked-line:nth-child(3n+1) {
+    border-color: #20c997;
   }
   #lines-container{
     padding-left: inherit;
