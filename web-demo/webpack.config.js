@@ -16,7 +16,6 @@ const config = {
     rules: [
       {
         test: /\.js$/,
-        exclude: /(node_modules|bower_components)/,
         use: {
           loader: 'babel-loader',
           options: {
@@ -26,7 +25,10 @@ const config = {
                   chrome: "77",
                 },
               }
-            ]]
+            ]],
+            plugins: [
+              '@babel/plugin-proposal-object-rest-spread'
+            ],
           }
         }
       },
