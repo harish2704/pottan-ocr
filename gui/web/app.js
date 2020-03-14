@@ -27,6 +27,18 @@ new Vue({
     lines: []
   },
   methods: {
+    saveAsTrainData: function(){
+      var zip = new JSZip();
+      var linesData =  this.lines.map( v=>{
+        return { line: v.box, text: v.text };
+      });
+      zip.file('image.png', this.currentFileBlob );
+      zip.file('lines.json', JSON.stringify( linesData, null, 1 ));
+      zip.generateAsync({type:"blob"})
+      .then(function(content) {
+        saveAs(content, 'pottan-ocr_training-data_' + Date.now() + '_.zip');
+      });
+    },
     doneBulkEditing: function(){
       this.bulkEditingLines.split('\n').forEach((v,i) => {
         this.lines[i].text = v;
