@@ -17,6 +17,7 @@ function processLine(line){
 new Vue({
   el: '#main',
   data: {
+    isBulkEditing: false,
     selectedFileName: '',
     currentFileBlob: null,
     padding_bottom: 0,
@@ -26,6 +27,16 @@ new Vue({
     lines: []
   },
   methods: {
+    doneBulkEditing: function(){
+      this.bulkEditingLines.split('\n').forEach((v,i) => {
+        this.lines[i].text = v;
+      });
+      this.isBulkEditing = false;
+    },
+    startBulkEditing: function(){
+      this.bulkEditingLines = this.lines.map(v=>v.text).join('\n');
+      this.isBulkEditing = true;
+    },
     doOcr:function(){
       this.isLoading = true;
       var data = new FormData();
@@ -43,6 +54,7 @@ new Vue({
               box: processLine( line ),
               text: data.text[i],
               highlight: false,
+              isEditing: false,
             };
           });
           this.isLoading = false;

@@ -96,8 +96,22 @@
           <div class="card">
             <div class="card-body">
               <h5 class="card-title text-primary">OCR Output</h5>
-              <div id="output">
-                <pre class="ocr-text" v-for="line in lines" v-bind:class="{ 'text-danger font-weight-bold': line.highlight }" >{{ line.text }}</pre>
+              <button class="btn btn-warning" @click="startBulkEditing" v-if="!isBulkEditing" >Edit</button>
+              <button class="btn btn-success" @click="doneBulkEditing" v-if="isBulkEditing">Editing done</button>
+              
+              <div id="output" v-if="isBulkEditing">
+                <textarea class="form-control" :rows="lines.length" v-model="bulkEditingLines"></textarea>
+                
+              </div>
+              <div id="output" v-if="!isBulkEditing">
+                <div v-for="line in lines" >
+                  <pre class="ocr-text"
+                       v-bind:class="{ 'text-danger font-weight-bold': line.highlight }"
+                       @click="line.isEditing=true"
+                       v-if="!line.isEditing" >{{ line.text }}</pre>
+                  <input class="w-100" v-if="line.isEditing" v-model="line.text" v-on:keyup.enter="line.isEditing=false" />
+                </div>
+                
               </div>
             </div>
           </div>
