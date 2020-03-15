@@ -33,7 +33,6 @@
     position: absolute;
     top: 0px;
     display: block;
-    left: 15px;
   }
   .ocr-text {
     margin-bottom: 4px;
@@ -83,14 +82,20 @@
       </div>
 
       <div class="row w-100">
-        <div class="col-md-6 overflow-auto">
+        <div class="col-md-6">
+          <div>
           <canvas ref="canvas" class="w-100" alt="Selected image" @resize="onCanvasResize($event)" ></canvas>
           <div id="lines-container" :style="{transform: 'scale( ' + scalingFactor + ',' + scalingFactor + ')' }">
-            <div class="marked-line"
+            <vue-drag-resize class="marked-line"
               v-for="l in lines"
-              :style="{ left: l.box.x + 'px', top: l.box.y+'px', width: l.box.w + 'px', height: l.box.h + 'px'}"
-              @mouseover="l.highlight = true" @mouseleave="l.highlight = false"
-              v-bind:class="{ 'hightlighed': l.highlight }"></div>
+              :key="l.id"
+              :x="l.box.x" :y="l.box.y" :w="l.box.w" :h="l.box.h"
+              @activated="l.highlight = true" @deactivated="l.highlight = false"
+              @resizing="onResizeDrag($event, l.box )"
+              @dragging="onResizeDrag($event, l.box )"
+              v-bind:class="{ 'hightlighed': l.highlight }">
+            </vue-drag-resize>
+          </div>
           </div>
         </div>
         <div class="col-md-6">
@@ -123,6 +128,7 @@
     </div>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.min.js"></script>
+  <script src="https://unpkg.com/vue-drag-resize@1.3.2/dist/index.js" type="text/javascript" charset="utf-8"></script>
   <script src="./app.js" type="text/javascript" charset="utf-8"></script>
   <script src="https://unpkg.com/jszip@3.2.2/dist/jszip.min.js" type="text/javascript" charset="utf-8"></script>
   <script src="https://unpkg.com/file-saver@2.0.2/dist/FileSaver.min.js" type="text/javascript" charset="utf-8"></script>

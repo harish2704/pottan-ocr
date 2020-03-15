@@ -13,9 +13,13 @@ function processLine(line){
     h: line[3] - line[1],
   };
 }
-
+VueDragResize = VueDragResize.default;
+Vue.component('vue-drag-resize', VueDragResize);
 new Vue({
   el: '#main',
+  components: {
+    VueDragResize
+  },
   data: {
     isBulkEditing: false,
     selectedFileName: '',
@@ -44,6 +48,12 @@ new Vue({
         this.lines[i].text = v;
       });
       this.isBulkEditing = false;
+    },
+    onResizeDrag: function( rect, box ){
+      box.x = rect.left;
+      box.y =rect.top;
+      box.w =rect.width;
+      box.h = rect.height;
     },
     startBulkEditing: function(){
       this.bulkEditingLines = this.lines.map(v=>v.text).join('\n');
