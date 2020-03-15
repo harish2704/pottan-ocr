@@ -5,22 +5,44 @@
   <title>Pottan-ocr demo</title>
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
 <style type="text/css" media="all">
-  .lineseg{
-    border: red solid 2px
-  }
   .btn .spinner-border, .btn .txt-loading, .btn[disabled] .txt-button{
     display: none;
   }
   .btn[disabled] .spinner-border, .btn[disabled] .txt-loading, .btn .txt-button{
     display: inline-block;
   }
-  pre#output {
-    font-size: 1.2rem;
+  .marked-line{
+    border-style: solid;
+    border-color: orange;
+    border-width: 2px;
+    position: absolute;
+  }
+  .marked-line.hightlighed{
+    border-width: 6px;
+    border-color: red !important;
+  }
+  .marked-line:nth-child(3n) {
+    border-color: green;
+  }
+  .marked-line:nth-child(3n+1) {
+    border-color: #20c997;
+  }
+  #lines-container{
+    padding-left: inherit;
+    padding-right: inherit;
+    position: absolute;
+    top: 0px;
+    display: block;
+    left: 10px;
+  }
+  .ocr-text {
+    margin-bottom: 4px;
+    font-size: 120%;
   }
 </style>
 </head>
 <body >
-  <div class="container-fluid">
+  <div class="container-fluid" id="main">
     <a href="https://github.com/harish2704/pottan-ocr"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/652c5b9acfaddf3a9c326fa6bde407b87f7be0f4/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6f72616e67655f6666373630302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_orange_ff7600.png"></a>
     <div class="row">
       <div class="col-md-12">
@@ -32,11 +54,12 @@
       <div class="col-md-12 row">
         <div class="col-md-4">
           <div class="form-group">
+            <input type="file" accept="image/*" style="visibility:hidden; height:0" @change="onChangeFile($event)" ref="file_input">
             <div class="input-group input-file" >
-              <input type="text" class="form-control" placeholder='Choose a file...' />
+              <input type="text" readonly v-model="selectedFileName" class="form-control" placeholder='Choose a file...' @click="$refs.file_input.click()" />
               <div class="input-group-append">
-                <button class="btn btn-primary btn-choose" type="button">Choose another image</button>
-                <button class="btn btn-success pull-right" id="run-btn">
+                <button class="btn btn-primary btn-choose" type="button" @click="$refs.file_input.click()" >Choose another image</button>
+                <button class="btn btn-success pull-right"  @click="doOcr()" :disabled="isLoading" >
                     <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                     <span class="txt-loading">Loading...</span>
                     <span class="txt-button">Run OCR</span>
@@ -49,25 +72,49 @@
           <div class="form-row">
             <div class="col">
               <label>Padding top</label>
-              <input id="ip-padding-top" type="number" class="form-control" value=0>
+              <input v-model="padding_top" type="number" class="form-control" value=0>
             </div>
             <div class="col">
               <label>Padding bottom</label>
-              <input id="ip-padding-bottom" type="number" class="form-control" value=0>
+              <input v-model="padding_bottom" type="number" class="form-control" value=0>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="row">
-        <div class="col-md-6">
-          <canvas id="for-cropper" class="img-thumbnail" src="" alt="Selected image"/>
+      <div class="row w-100">
+        <div class="col-md-6 overflow-auto">
+          <canvas ref="canvas" class="w-100" alt="Selected image" @resize="onCanvasResize($event)" ></canvas>
+          <div id="lines-container" :style="{transform: 'scale( ' + scalingFactor + ',' + scalingFactor + ')' }">
+            <div class="marked-line"
+              v-for="l in lines"
+              :style="{ left: l.box.x + 'px', top: l.box.y+'px', width: l.box.w + 'px', height: l.box.h + 'px'}"
+              @mouseover="l.highlight = true" @mouseleave="l.highlight = false"
+              v-bind:class="{ 'hightlighed': l.highlight }"></div>
+          </div>
         </div>
         <div class="col-md-6">
           <div class="card">
             <div class="card-body">
               <h5 class="card-title text-primary">OCR Output</h5>
-              <pre id="output"></pre>
+              <button class="btn btn-warning" @click="startBulkEditing" v-if="!isBulkEditing" >Edit</button>
+              <button class="btn btn-success" @click="doneBulkEditing" v-if="isBulkEditing">Editing done</button>
+              <button class="btn btn-primary" :disabled="!lines.length" @click="saveAsTrainData" >Save as training data</button>
+              
+              <div id="output" v-if="isBulkEditing">
+                <textarea class="form-control" :rows="lines.length" v-model="bulkEditingLines"></textarea>
+                
+              </div>
+              <div id="output" v-if="!isBulkEditing">
+                <div v-for="line in lines" >
+                  <pre class="ocr-text"
+                       v-bind:class="{ 'text-danger font-weight-bold': line.highlight }"
+                       @click="line.isEditing=true"
+                       v-if="!line.isEditing" >{{ line.text }}</pre>
+                  <input class="w-100" v-if="line.isEditing" v-model="line.text" v-on:keyup.enter="line.isEditing=false" />
+                </div>
+                
+              </div>
             </div>
           </div>
         </div>
@@ -75,7 +122,9 @@
 
     </div>
   </div>
-  <script src="https://unpkg.com/jquery@3.3.1/dist/jquery.min.js" type="text/javascript" charset="utf-8"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.min.js"></script>
   <script src="./app.js" type="text/javascript" charset="utf-8"></script>
+  <script src="https://unpkg.com/jszip@3.2.2/dist/jszip.min.js" type="text/javascript" charset="utf-8"></script>
+  <script src="https://unpkg.com/file-saver@2.0.2/dist/FileSaver.min.js" type="text/javascript" charset="utf-8"></script>
 </body>
 </html>

@@ -108,12 +108,20 @@ class WeightsSaver(Callback):
         self.fname = opt.outfile + '_' + datetime.now().strftime('%d%m%Y_%H%M%S')
         self.i = 1
         self.j = 1
+        self.saveInterval = 100 if 'SAVE_INTERVAL' not in environ else int( environ['SAVE_INTERVAL'])
+
+    def save(self):
+        name = '%s_%i.h5' % (self.fname, self.i)
+        backBone.save( name )
+        print( 'Saved "%s"' % name)
+        self.i = self.i + 1
+
+    def on_epoch_end(self, epoch, logs={}):
+        self.save()
+
     def on_batch_end(self, epoch, logs={}):
-        if(self.j%100 == 0):
-            name = '%s_%i.h5' % (self.fname, self.i)
-            backBone.save( name )
-            print( 'Saved "%s"' % name)
-            self.i = self.i + 1
+        if(self.j%self.saveInterval == 0):
+            self.save()
         self.j = self.j + 1
 
 #  from keras.callbacks import  TensorBoard

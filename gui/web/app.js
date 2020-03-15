@@ -5,133 +5,122 @@
  * Copyright 2020 Harish.K<harish2704@gmail.com>
  */
 
+function processLine(line){
+  return {
+    x: line[0],
+    y: line[1],
+    w: line[2] - line[0],
+    h: line[3] - line[1],
+  };
+}
 
-$(function() {
-  var canvas = $('#for-cropper')[0];
-  var fileInput = $(".input-file");
-  var currentFile;
+new Vue({
+  el: '#main',
+  data: {
+    isBulkEditing: false,
+    selectedFileName: '',
+    currentFileBlob: null,
+    padding_bottom: 0,
+    padding_top: 0,
+    scalingFactor: 1,
+    isLoading: false,
+    lines: []
+  },
+  methods: {
+    saveAsTrainData: function(){
+      var zip = new JSZip();
+      var linesData =  this.lines.map( v=>{
+        return { line: v.box, text: v.text };
+      });
+      zip.file('image.png', this.currentFileBlob );
+      zip.file('lines.json', JSON.stringify( linesData, null, 1 ));
+      zip.generateAsync({type:"blob"})
+      .then(function(content) {
+        saveAs(content, 'pottan-ocr_training-data_' + Date.now() + '_.zip');
+      });
+    },
+    doneBulkEditing: function(){
+      this.bulkEditingLines.split('\n').forEach((v,i) => {
+        this.lines[i].text = v;
+      });
+      this.isBulkEditing = false;
+    },
+    startBulkEditing: function(){
+      this.bulkEditingLines = this.lines.map(v=>v.text).join('\n');
+      this.isBulkEditing = true;
+    },
+    doOcr:function(){
+      this.isLoading = true;
+      var data = new FormData();
+      data.append('image', this.currentFileBlob );
+      fetch("/ocr?padding_top=" + this.padding_top + '&padding_bottom=' + this.padding_bottom,{
+        method: "POST",
+        body: data,
+      })
+        .then(res => res.json())
+        .then(data => {
+          console.log( 'success', data );
+          this.lines = data.lines.map(function(line, i){
+            return {
+              id: i,
+              box: processLine( line ),
+              text: data.text[i],
+              highlight: false,
+              isEditing: false,
+            };
+          });
+          this.isLoading = false;
+        })
+        .catch(error => {
+          console.log( 'error', error );
+          alert('Some error occurred while Calling OCR API')
+          this.isLoading = false;
+        })
+    },
+    onCanvasResize: function(e){
+      console.log( 'resize', e);
+    },
 
-  function loadXHR(url) {
-
-    return new Promise(function(resolve, reject) {
-      try {
-        var xhr = new XMLHttpRequest();
-        xhr.open("GET", url);
-        xhr.responseType = "blob";
-        xhr.onerror = function() {reject("Network error.")};
-        xhr.onload = function() {
-          if (xhr.status === 200) {resolve(xhr.response)}
-          else {reject("Loading error:" + xhr.statusText)}
-        };
-        xhr.send();
-      }
-      catch(err) {reject(err.message)}
-    });
-  }
-
-  function setImage( file ){
-    return new Promise(function(resolve, reject){
-      currentFile = file;
+    setImage: function( file ){
+      var self = this;
+      var canvas = this.$refs.canvas;
       var ctx = canvas.getContext('2d');
       var img = new Image;
+      this.currentFileBlob = file;
       img.onload = function() {
         canvas.width = img.width;
         canvas.height = img.height;
         ctx.drawImage(img, 0, 0);
-        resolve();
+        self.scalingFactor = canvas.clientWidth / canvas.width;
       }
       img.src = URL.createObjectURL( file );
-    });
-  }
+    },
 
-  function drawBoxes( data ){
-    setImage( currentFile )
-      .then(function(){
-        var lines = data.lines;
-        var ctx = canvas.getContext('2d');
-        var colors = [ '#dc3545', '#007bff', '#28a745']
-        lines.forEach(function(line, i){
-          var width = line[2] - line[0];
-          var height = line[3] - line[1];
-          ctx.beginPath();
-          ctx.lineWidth = "3";
-          ctx.strokeStyle = colors[ i%colors.length ];
-          ctx.rect( line[0], line[1], width, height);
-          ctx.stroke();
-        })
-      })
-  }
-
-
-  function initUi() {
+    onChangeFile: function File( e ){
+      this.setImage(e.target.files[0]);
+      this.selectedFileName = e.target.files[0].name;
+    },
+  },
+  mounted: function(){
+    var self = this;
+    fetch('./data/sample.png')
+      .then( v => v.blob() )
+      .then(blob => this.setImage(blob));
     document.onpaste = function(event){
       var items = (event.clipboardData || event.originalEvent.clipboardData).items;
       for (var index in items) {
         var item = items[index];
         if (item.kind === 'file') {
           var blob = item.getAsFile();
-          setImage( blob )
+          self.setImage( blob )
+          self.lines = [];
         }
       }
     };
-
-    fileInput.before(
-      function() {
-        if ( !$(this).prev().hasClass('input-ghost') ) {
-          var element = $("<input type='file' class='input-ghost' accept=\"image/*\" style='visibility:hidden; height:0'>");
-          element.attr("name",$(this).attr("name"));
-          element.change(function( e ){
-            setImage(e.target.files[0]);
-            element.next(element).find('input').val((element.val()).split('\\').pop());
-          });
-          $(this).find("button.btn-choose").click(function(){
-            element.click();
-          });
-          $(this).find('input').css("cursor","pointer");
-          $(this).find('input').mousedown(function() {
-            $(this).parents('.input-file').prev().click();
-            return false;
-          });
-          return element;
-        }
-      }
-    );
-
-    var runButton = $('#run-btn');
-    runButton.click(function(){
-      runButton.attr('disabled', 'disabled');;
-      var data = new FormData();
-      data.append('image', currentFile );
-      $.ajax({
-        type: "POST",
-        url: "/ocr?" + $.param({
-          padding_top: $('#ip-padding-top').val(),
-          padding_bottom: $('#ip-padding-bottom').val(),
-        }),
-        success: function (data) {
-          console.log( 'success', data );
-          drawBoxes( data );
-          $('#output').text( data.text.join('\n') )
-          runButton.removeAttr('disabled');
-        },
-        error: function (error) {
-          console.log( 'error', data );
-          alert('Some error occurred while Calling OCR API')
-          runButton.removeAttr('disabled');
-        },
-        data: data,
-        processData: false,
-        contentType: false
-      });
-    })
-
-    loadXHR('./data/sample.png')
-    .then(function(blob) {
-      setImage(blob);
+    window.addEventListener("resize", function(){
+      var canvas = self.$refs.canvas;
+      self.scalingFactor = canvas.clientWidth / canvas.width;
     });
-  }
-
-
-
-  initUi();
+  },
 });
+

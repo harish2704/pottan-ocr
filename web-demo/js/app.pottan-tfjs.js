@@ -4,13 +4,13 @@
  * Copyright 2018 Harish.K<harish2704@gmail.com>
  */
 var jquery = require('jquery');
-var glyphsList = require('../data/glyphs.json');
 var tf = require('@tensorflow/tfjs');
+var glyphsList = require('../data/glyphs.json');
 
 window.tf = tf;
 window.$ = jquery;
 
-glyphsList.unshift('');
+glyphsList.push('');
 var IMG_HEIGHT = 32;
 
 require('cropper');
@@ -34,7 +34,7 @@ $(function() {
           var blob = item.getAsFile();
           var reader = new FileReader();
           reader.onload = function(event){
-            imgCropper.data('cropper').replace( event.target.result );
+            imgCropper.replace( event.target.result );
           };
           reader.readAsDataURL(blob);
         }
@@ -84,18 +84,18 @@ $(function() {
     }).join('');
   }
 
-  tf.loadGraphModel('ctpn-json/model.json').then( model =>{
+  tf.loadLayersModel('./data/pottan_min/model.json').then( model =>{
     window.model = model;
-
+    IMG_HEIGHT = model.layers[0].batchInputShape[1];
     // This is hack to trace outputs of each layer after execution
-    // model.layers.forEach(function( l ){
-      // l.__orig_call = l.call;
-      // l.call = function( inputs, args ){
-        // var out = this.__orig_call( inputs, args );
-        // this.__hari_lastout = tf.keep( out.clone() );
-        // return out;
-      // }
-    // });
+    model.layers.forEach(function( l ){
+      l.__orig_call = l.call;
+      l.call = function( inputs, args ){
+        var out = this.__orig_call( inputs, args );
+        this.__hari_lastout = tf.keep( out.clone() );
+        return out;
+      }
+    });
   })
 
   initUi();
@@ -110,26 +110,22 @@ $(function() {
     var data = tf.browser.fromPixels( croppedCanvas );
 
     // pick any one of the color channel. ( Here it is Green )
-    // data = data.gather([0], [2])
-    // data = tf.image.resizeBilinear( data, [ IMG_HEIGHT, newWidth ] );
+    data = data.gather([0], [2])
+    data = tf.image.resizeBilinear( data, [ IMG_HEIGHT, newWidth ] );
 
     // Normalize the values . Fit between -1 & 1
     data = data.sub( 127.5 );
     data = data.div( 127.5 );
 
     var start = new Date();
-    var outputData = model.executeAsync( data.expandDims() )
-      .then( function( out ){
-        var x = out;
-        alert( 'Completed model executeAsync: ' + ( new Date() - start ) );
-      });
-    // var predictions = outputData.argMax(2).squeeze();
-    // tf.print( predictions,1 );
-    // var out = decodeStr( Array.from( predictions.dataSync()) );
-    // output.text( out );
-    // if( debugCheckbox.prop("checked") ){
-      // renderLayerOutputs( model );
-    // }
+    var outputData = model.predict( data.expandDims() );
+    var predictions = outputData.argMax(2).squeeze();
+    tf.print( predictions,1 );
+    var out = decodeStr( Array.from( predictions.dataSync()) );
+    output.text( out );
+    if( debugCheckbox.prop("checked") ){
+      renderLayerOutputs( model );
+    }
   });
 });
 
@@ -137,7 +133,7 @@ async function renderLayerOutputs( model ){
   var tfvis = require('@tensorflow/tfjs-vis');
   window.tfvis = tfvis;
   console.log(`Total num layers: ${model.layers.length}`);
-  for (var i = 0; i < 28 ; i ++) {
+  for (var i = 0; i < model.layers.length; i ++) {
     var layer = model.layers[i];
 
     var surface = tfvis.visor().surface({ name: 'Layer outputs', tab: layer.name });
