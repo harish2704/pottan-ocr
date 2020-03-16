@@ -18,7 +18,6 @@
     position: absolute;
   }
   .marked-line.hightlighed{
-    border-width: 6px;
     border-color: red !important;
   }
   .marked-line:nth-child(3n) {
@@ -79,6 +78,10 @@
             </div>
           </div>
         </div>
+        <div class="col-md-2">
+          <input type="file" accept="application/zip" style="visibility:hidden; height:0" @change="onChangeZipFile($event)" ref="zip_file_input">
+          <button class="btn btn-primary " type="button" @click="$refs.zip_file_input.click()" >Inspect saved training data</button>
+        </div>
       </div>
 
       <div class="row w-100">
@@ -89,6 +92,7 @@
             <vue-drag-resize class="marked-line"
               v-for="l in lines"
               :key="l.id"
+              minh="5"
               :x="l.box.x" :y="l.box.y" :w="l.box.w" :h="l.box.h"
               @activated="l.highlight = true" @deactivated="l.highlight = false"
               @resizing="onResizeDrag($event, l.box )"

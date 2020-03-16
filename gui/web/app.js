@@ -33,6 +33,7 @@ new Vue({
   methods: {
     saveAsTrainData: function(){
       var zip = new JSZip();
+      var outputFileName = this.selectedZipFileName || 'pottan-ocr_training-data_' + Date.now() + '_.zip'
       var linesData =  this.lines.map( v=>{
         return { line: v.box, text: v.text };
       });
@@ -40,7 +41,8 @@ new Vue({
       zip.file('lines.json', JSON.stringify( linesData, null, 1 ));
       zip.generateAsync({type:"blob"})
       .then(function(content) {
-        saveAs(content, 'pottan-ocr_training-data_' + Date.now() + '_.zip');
+
+        saveAs(content, outputFileName );
       });
     },
     doneBulkEditing: function(){
@@ -87,9 +89,6 @@ new Vue({
           this.isLoading = false;
         })
     },
-    onCanvasResize: function(e){
-      console.log( 'resize', e);
-    },
 
     setImage: function( file ){
       var self = this;
@@ -109,6 +108,32 @@ new Vue({
     onChangeFile: function File( e ){
       this.setImage(e.target.files[0]);
       this.selectedFileName = e.target.files[0].name;
+    },
+
+    onChangeZipFile: function(e){
+      var selectedFile = e.target.files[0];
+      this.selectedZipFileName = selectedFile.name;
+      var self = this;
+      JSZip.loadAsync( selectedFile )                                   // 1) read the Blob
+        .then(function(zip) {
+          return Promise.all([
+            zip.file('lines.json').async('text'),
+            zip.file('image.png').async('blob'),
+          ]);
+        })
+        .then(function([ lines, img ]){
+          lines = JSON.parse( lines );
+          self.lines = lines.map(function(line, i){
+            return {
+              id: i,
+              box: line.line,
+              text: line.text,
+              highlight: false,
+              isEditing: false,
+            };
+          });
+          self.setImage( img );
+        })
     },
   },
   mounted: function(){
