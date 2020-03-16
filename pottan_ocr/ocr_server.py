@@ -121,13 +121,18 @@ def do_ocr():
     return response
 
 
+def main( crnn ):
+    global model, lineHeight, app
+    from tensorflow.keras import models
+    model = models.load_model( crnn )
+    lineHeight = model.input.shape[1]
+    if not os.path.exists(TEMP_DIR):
+        os.makedirs(TEMP_DIR)
+    return app
+
 if( __name__ == '__main__' ):
     parser = argparse.ArgumentParser()
     parser.add_argument('--crnn', required=True, help="path to pre trained model ( Keras saved model (.h5 file) )")
     opt = parser.parse_args()
-    from tensorflow.keras import models
-    model = models.load_model( opt.crnn )
-    lineHeight = model.input.shape[1]
-    if not os.path.exists(TEMP_DIR):
-        os.makedirs(TEMP_DIR)
+    main( opt.crnn )
     app.run(host='0.0.0.0', port=5544)
