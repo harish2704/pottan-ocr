@@ -1,3 +1,7 @@
+## Notice: This project is not relevent anymore since latest version of tesseract ocr is using same technology ( CNN-RNN models ) and it is capable of detecting complex scripts with very high accuracy . A web demo of latest tesseract ocr can be seen in the link given below
+
+https://harish2704.github.io/ml-tesseract-demo/
+
 [![Join the chat at https://gitter.im/pottan-ocr/Lobby](https://badges.gitter.im/pottan-ocr/Lobby.svg)](https://gitter.im/pottan-ocr/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 # pottan-ocr
