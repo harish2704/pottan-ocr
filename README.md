@@ -8,9 +8,6 @@ https://harish2704.github.io/ml-tesseract-demo/
 
 A stupid OCR for malayalam language. It can be Easily configured to process any other languages with complex scripts
 
-## complete page OCR server demo
-https://pottan-ocr.harishk.in/
-
 ## Client side web Demo of individual line recognition
 https://harish2704.github.io/pottan-demo/
 
